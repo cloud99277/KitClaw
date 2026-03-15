@@ -1,4 +1,6 @@
--r src/rag/requirements.txt
+-r rag-engine/requirements.txt
+pandas>=2.2.0
+python-frontmatter>=1.1.0
 pytest>=9.0.0
 pytest-cov>=7.0.0
 ruff>=0.15.0

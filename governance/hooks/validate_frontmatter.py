@@ -36,6 +36,65 @@ RECOMMENDED_FIELDS = {
 VALID_SCOPES = {"archive", "content", "dev", "personal"}
 
 
+def _strip_quotes(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] in ('"', "'") and value[-1] == value[0]:
+        return value[1:-1]
+    return value
+
+
+def _parse_frontmatter_fallback(content: str) -> dict:
+    """Parse a small YAML subset without external dependencies."""
+    import re
+
+    m = re.match(r'^---\s*\n(.*?)\n---\s*\n?', content, re.DOTALL)
+    if not m:
+        raise ValueError("YAML frontmatter 格式错误（缺少闭合 ---）")
+
+    metadata: dict[str, object] = {}
+    current_key: str | None = None
+
+    for raw_line in m.group(1).splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        if stripped.startswith("- "):
+            if current_key is None:
+                raise ValueError("YAML 列表项缺少父字段")
+            metadata.setdefault(current_key, [])
+            current_val = metadata[current_key]
+            if not isinstance(current_val, list):
+                raise ValueError(f"字段 '{current_key}' 同时被解析为标量和列表")
+            current_val.append(_strip_quotes(stripped[2:]))
+            continue
+
+        if ":" not in line:
+            raise ValueError(f"无法解析的 frontmatter 行: {line}")
+
+        key, raw_value = line.split(":", 1)
+        key = key.strip()
+        value = raw_value.strip()
+
+        if not key:
+            raise ValueError(f"空字段名: {line}")
+
+        current_key = key
+        if not value:
+            metadata[key] = []
+            continue
+
+        if value.startswith("[") and value.endswith("]"):
+            inner = value[1:-1].strip()
+            metadata[key] = [] if not inner else [_strip_quotes(part) for part in inner.split(",")]
+            continue
+
+        metadata[key] = _strip_quotes(value)
+
+    return metadata
+
+
 def validate_frontmatter_content(content: str, filepath: str) -> list[dict]:
     """
     校验单个文件的 frontmatter。
@@ -60,19 +119,7 @@ def validate_frontmatter_content(content: str, filepath: str) -> list[dict]:
             post = frontmatter.loads(content)
             metadata = dict(post.metadata)
         else:
-            # 简单降级解析
-            import re
-            m = re.match(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL)
-            if not m:
-                issues.append({
-                    "file": filepath,
-                    "field": "frontmatter",
-                    "severity": "error",
-                    "message": "YAML frontmatter 格式错误（缺少闭合 ---）",
-                })
-                return issues
-            import yaml
-            metadata = yaml.safe_load(m.group(1)) or {}
+            metadata = _parse_frontmatter_fallback(content)
     except Exception as e:
         issues.append({
             "file": filepath,

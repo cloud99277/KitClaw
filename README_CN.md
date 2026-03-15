@@ -157,6 +157,20 @@ python3 rag-engine/knowledge_index.py --update ~/knowledge-base --db-path ~/.lan
 python3 rag-engine/knowledge_search.py "查询" --mode hybrid --top 5
 ```
 
+## 🛠️ 贡献者环境
+
+```bash
+# 创建本地开发环境
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+
+# 安装仓库级 pre-commit hook
+bash governance/hooks/install.sh
+
+# 运行测试
+.venv/bin/python -m pytest tests
+```
+
 ## 🔧 编写你自己的 Skill
 
 查看 [docs/skill-specification.md](docs/skill-specification.md) 获取完整规范，或直接用 `templates/SKILL.md.template` 作为起点。

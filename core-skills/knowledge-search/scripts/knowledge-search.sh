@@ -17,29 +17,7 @@ set -euo pipefail
 # 解析真实路径（跟随软链接）
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# 查找 knowledge_search.py 的位置
-# 优先级: 环境变量 > 项目 src/rag/ > 同级目录
-if [[ -n "${KNOWLEDGE_SEARCH_PY:-}" ]] && [[ -f "$KNOWLEDGE_SEARCH_PY" ]]; then
-    SEARCH_PY="$KNOWLEDGE_SEARCH_PY"
-elif [[ -f "$SKILL_DIR/../../src/rag/knowledge_search.py" ]]; then
-    SEARCH_PY="$(cd "$SKILL_DIR/../../src/rag" && pwd)/knowledge_search.py"
-else
-    echo '{"schema_version":"1.0","error":"knowledge_search.py not found. Set KNOWLEDGE_SEARCH_PY or install from project root."}' >&2
-    exit 1
-fi
-
 PROJECT_DIR="$(cd "$SKILL_DIR/../.." && pwd)"
-
-# ---------- Python 路径 ----------
-
-if [[ -n "${VIRTUAL_ENV:-}" ]]; then
-    PYTHON_BIN="python3"
-elif [[ -x "$PROJECT_DIR/.venv/bin/python3" ]]; then
-    PYTHON_BIN="$PROJECT_DIR/.venv/bin/python3"
-else
-    PYTHON_BIN="python3"
-fi
 
 # ---------- 参数解析 ----------
 
@@ -131,6 +109,33 @@ done
 if [[ -z "$QUERY" ]]; then
     echo "{\"schema_version\":\"1.0\",\"error\":\"Query is required. Usage: knowledge-search.sh \\\"query\\\" [--preset coding|audit|qa|fast]\"}" >&2
     exit 1
+fi
+
+# ---------- 运行时路径 ----------
+
+# 查找 knowledge_search.py 的位置
+# 优先级: 环境变量 > 项目 rag-engine/ > 兼容旧版 src/rag/
+if [[ -n "${KNOWLEDGE_SEARCH_PY:-}" ]] && [[ -f "$KNOWLEDGE_SEARCH_PY" ]]; then
+    SEARCH_PY="$KNOWLEDGE_SEARCH_PY"
+elif [[ -f "$PROJECT_DIR/rag-engine/knowledge_search.py" ]]; then
+    SEARCH_PY="$PROJECT_DIR/rag-engine/knowledge_search.py"
+elif [[ -f "$PROJECT_DIR/src/rag/knowledge_search.py" ]]; then
+    SEARCH_PY="$PROJECT_DIR/src/rag/knowledge_search.py"
+else
+    echo '{"schema_version":"1.0","error":"knowledge_search.py not found. Set KNOWLEDGE_SEARCH_PY or install from the KitClaw project root."}' >&2
+    exit 1
+fi
+
+# ---------- Python 路径 ----------
+
+if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+    PYTHON_BIN="python3"
+elif [[ -x "$PROJECT_DIR/rag-engine/.venv/bin/python3" ]]; then
+    PYTHON_BIN="$PROJECT_DIR/rag-engine/.venv/bin/python3"
+elif [[ -x "$PROJECT_DIR/.venv/bin/python3" ]]; then
+    PYTHON_BIN="$PROJECT_DIR/.venv/bin/python3"
+else
+    PYTHON_BIN="python3"
 fi
 
 # ---------- preset 配置 ----------

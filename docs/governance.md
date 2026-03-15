@@ -3,13 +3,13 @@ version: "1.0"
 inherits: "~/.ai-skills/.system/GOVERNANCE.md"
 last_updated: "2026-03-15"
 scope: dev
-title: "Agent-OS 知识库治理宪法"
+title: "KitClaw 仓库治理宪法"
 tags: [governance, policy]
 ---
 
-# Agent-Toolchain 知识库治理宪法（下位法）
+# KitClaw 仓库治理宪法（下位法）
 
-> 本文档是 Agent-Toolchain Knowledge Base 项目的治理规则。
+> 本文档是 KitClaw 仓库的治理规则。
 > 继承 `~/.ai-skills/.system/GOVERNANCE.md`（上位法 v1.0）的所有通用约束。
 > 下位法不能违反上位法条款。如有冲突，以上位法为准。
 
@@ -70,7 +70,7 @@ tags: [governance, policy]
 
 | scope | 目录 | 读 | 写 | 说明 |
 |-------|------|---|---|------|
-| `dev` | `docs/`, `src/`, `skills/` | Agent | Agent | 研发区域 |
+| `dev` | `docs/`, `core-skills/`, `governance/`, `rag-engine/`, `tests/`, `templates/` | Agent | Agent | 研发区域 |
 | `archive` | `docs/architecture/` | Agent | 人类 | 原始架构文档（只读） |
 | `personal` | （预留） | owner | owner | MVP 不实现 |
 
@@ -83,7 +83,7 @@ tags: [governance, policy]
 
 ### 写操作审计
 
-通过 `auto_commit.sh` 的规范化 commit message 自动记录：
+通过 Git 提交历史记录，建议使用规范化 commit message：
 ```
 [Agent] type: message
 ```
@@ -109,9 +109,10 @@ tags: [governance, policy]
 
 ## §5 Auditor 巡检规则
 
-**工具**：`src/governance/knowledge_auditor.py`
+**工具**：`governance/knowledge_auditor.py`
 **触发**：手动调用 或 cron 定期执行
 **范围**：`docs/` 目录下所有 `.md` 文件
+**可选 hook 安装**：`bash governance/hooks/install.sh`
 
 | 优先级 | 检查项 | 说明 |
 |--------|--------|------|

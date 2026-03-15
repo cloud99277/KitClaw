@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 # pre-commit hook: 校验 staged Markdown 文件的 frontmatter
-# 安装方法: bash src/hooks/install.sh
+# 安装方法: bash governance/hooks/install.sh
 
 set -euo pipefail
 
 # 获取项目根目录
 REPO_ROOT=$(git rev-parse --show-toplevel)
-VALIDATOR="$REPO_ROOT/src/hooks/validate_frontmatter.py"
+VALIDATOR="$REPO_ROOT/governance/hooks/validate_frontmatter.py"
+
+if [ ! -f "$VALIDATOR" ]; then
+    echo "❌ Frontmatter validator not found: $VALIDATOR" >&2
+    exit 1
+fi
 
 # 获取 staged 的知识库 Markdown 文件（README 等外部展示文档不强制 frontmatter）
 mapfile -t MD_FILES < <(
     git diff --cached --name-only --diff-filter=ACM \
-    | grep -E '^(docs|skills)/.*\.(md|markdown)$' || true
+    | grep -E '^(docs|core-skills)/.*\.(md|markdown)$' || true
 )
 
 if [ ${#MD_FILES[@]} -eq 0 ]; then

@@ -1,5 +1,8 @@
 ---
 name: knowledge-search
+title: "Knowledge Search Skill"
+tags: [knowledge, search, rag]
+scope: dev
 description: >
   Search the local Markdown knowledge base using hybrid (vector + FTS) retrieval.
   Use when you need to find architecture decisions, past research, configuration
@@ -125,16 +128,20 @@ bash ~/.ai-skills/knowledge-search/scripts/knowledge-search.sh "查询" \
 ## 安装
 
 ```bash
-# 从项目目录安装（创建软链接）
-bash skills/knowledge-search/scripts/install.sh
+# 从项目根目录安装 core skills
+bash install.sh
+
+# 安装 RAG 运行时（knowledge-search 需要）
+bash install.sh --with-rag
 ```
 
 ## 前置条件
 
 - Python 3.10+
-- LanceDB 索引已创建（运行 `python3 src/rag/knowledge_index.py --full <directory>`）
-- Python 依赖已安装（`pip install -r src/rag/requirements.txt`）
+- LanceDB 索引已创建（运行 `python3 rag-engine/knowledge_index.py --full <directory>`）
+- Python 依赖已安装（推荐直接执行 `bash install.sh --with-rag`，或手动 `pip install -r rag-engine/requirements.txt`）
 - 首次本地模型加载需能访问 Hugging Face，或提前缓存模型
+- wrapper 会优先使用 `rag-engine/.venv/bin/python3`
 
 ## 搜索结果使用协议
 

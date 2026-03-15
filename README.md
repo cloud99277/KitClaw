@@ -157,6 +157,20 @@ python3 rag-engine/knowledge_index.py --update ~/knowledge-base --db-path ~/.lan
 python3 rag-engine/knowledge_search.py "query" --mode hybrid --top 5
 ```
 
+## 🛠️ Contributor Setup
+
+```bash
+# Create a local development environment
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+
+# Install the repo pre-commit hook
+bash governance/hooks/install.sh
+
+# Run the test suite
+.venv/bin/python -m pytest tests
+```
+
 ## 🔧 Writing Your Own Skills
 
 See [docs/skill-specification.md](docs/skill-specification.md) for the full specification, or use `templates/SKILL.md.template` as a starting point.
