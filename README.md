@@ -1,30 +1,41 @@
-# KitClaw 🐾
+[English](README.md) | [简体中文](README_CN.md)
 
-> **Power up your AI agents with shared memory, skills, and governance.**
+<div align="center">
 
-KitClaw is an open-source infrastructure toolkit that gives your existing CLI AI agents (Claude Code, Gemini CLI, Codex CLI, etc.) superpowers they don't have out of the box:
+# 🐾 KitClaw
 
-- 🧠 **Three-Layer Memory** — L1 (identity), L2 (session whiteboard), L3 (knowledge base with RAG)
-- 🔧 **Unified Skill Framework** — Executable scripts with standardized `SKILL.md` contracts
-- 📊 **Built-in Observability** — Automatic JSONL execution logs for every skill run
-- 🏛️ **Governance** — Pre-commit hooks, document auditing, and constitutional rules
+**Power up your AI agents with shared memory, skills, and governance.**
 
-## How is KitClaw Different?
+[![Author](https://img.shields.io/badge/Author-Cloud927-blue?style=flat-square)](https://github.com/cloud99277)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
+</div>
+
+KitClaw is an open-source infrastructure toolkit that gives your existing CLI AI agents (Claude Code, Gemini CLI, Codex CLI, etc.) superpowers they don't have out of the box. It doesn't create or orchestrate agents — it **enhances** the ones you already use.
+
+## ✨ Features
+
+- 🧠 **Three-Layer Memory** — L1 (identity profile), L2 (session whiteboard), L3 (knowledge base with RAG)
+- 🔧 **Unified Skill Framework** — Executable Python/Bash scripts with standardized `SKILL.md` contracts
+- 📊 **Built-in Observability** — Automatic JSONL execution logs for every skill run, usage reports, unused skill detection
+- 🏛️ **Governance Tools** — Pre-commit hooks, document auditing, and constitutional rules for your knowledge base
+- 🪶 **Zero-Dependency Core** — L2 memory runs on pure Python stdlib; RAG engine is optional
+
+## 🤔 How is KitClaw Different?
 
 | | **AG2 (AutoGen)** | **AgentLoom** | **KitClaw** |
 |---|---|---|---|
 | **Purpose** | Create & orchestrate agents | Sync config across tools | Add memory & skills to existing agents |
 | **Skills** | N/A | Markdown prompts | Executable Python/Bash scripts |
 | **Memory** | None built-in | None | Three-layer model (L1/L2/L3) |
+| **Observability** | None | Basic telemetry | Execution logs + usage reports |
 | **Dependencies** | Heavy (Python framework) | Node.js | Zero for core, optional for RAG |
 
-**KitClaw doesn't create agents.** It enhances the ones you already use.
-
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/kitclaw.git
+git clone https://github.com/cloud99277/kitclaw.git
 cd kitclaw
 
 # Install core skills (zero dependencies)
@@ -32,41 +43,39 @@ bash install.sh
 
 # Optional: Install RAG engine for semantic search
 bash install.sh --with-rag
-
-# Verify installation
-python3 ~/.ai-skills/memory-manager/scripts/memory-search.py --version
 ```
 
 After installation:
+
 1. Edit `~/.ai-memory/config.json` to set your knowledge base path
 2. Copy `templates/AGENTS.md` to `~/AGENTS.md` and fill in your profile
 3. Read `docs/memory-architecture.md` to understand the memory model
 
-## Architecture
+## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    KitClaw                           │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  L1 Identity     ~/AGENTS.md (user profile + rules) │
-│  ───────────────────────────────────────────────     │
-│  L2 Session      ~/.ai-memory/whiteboard.json       │
-│                  (decisions / actions / learnings)   │
-│  ───────────────────────────────────────────────     │
-│  L3 Knowledge    Your Markdown vault + LanceDB RAG  │
-│  ───────────────────────────────────────────────     │
-│  Skills          ~/.ai-skills/ (symlinked)           │
-│  ───────────────────────────────────────────────     │
-│  Observability   ~/.ai-skills/.logs/executions.jsonl │
-│  ───────────────────────────────────────────────     │
-│  Governance      Pre-commit hooks + Auditor          │
-│                                                     │
-│  Works with: Claude · Gemini · Codex · Any CLI AI   │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                      KitClaw                         │
+├──────────────────────────────────────────────────────┤
+│                                                      │
+│  L1 Identity      ~/AGENTS.md (user profile + rules) │
+│  ────────────────────────────────────────────────     │
+│  L2 Session       ~/.ai-memory/whiteboard.json       │
+│                   (decisions / actions / learnings)   │
+│  ────────────────────────────────────────────────     │
+│  L3 Knowledge     Your Markdown vault + LanceDB RAG  │
+│  ────────────────────────────────────────────────     │
+│  Skills           ~/.ai-skills/ (symlinked)           │
+│  ────────────────────────────────────────────────     │
+│  Observability    ~/.ai-skills/.logs/executions.jsonl │
+│  ────────────────────────────────────────────────     │
+│  Governance       Pre-commit hooks + Auditor          │
+│                                                      │
+│  Works with: Claude · Gemini · Codex · Any CLI AI    │
+└──────────────────────────────────────────────────────┘
 ```
 
-## Directory Structure
+## 📦 Directory Structure
 
 ```
 kitclaw/
@@ -84,10 +93,11 @@ kitclaw/
 └── examples/                  # Sample knowledge vault
 ```
 
-## Core Skills
+## 📖 Core Skills
 
 ### memory-manager
-Search across all three memory layers. Query L1 identity files, L2 whiteboard entries, and L3 knowledge documents with a single command.
+
+Search across all three memory layers with a single command.
 
 ```bash
 # Search everything
@@ -95,22 +105,21 @@ python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "keyword"
 
 # Search only L2 whiteboard
 python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "keyword" --layer=L2
-
-# Search with scope
-python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "keyword" --scope=dev
 ```
 
 ### l2-capture
+
 Extract decisions, actions, and learnings from conversations into the shared whiteboard.
 
 ```bash
 python3 ~/.ai-skills/l2-capture/scripts/l2_capture.py \
   --project my-project \
-  --from-text "[decision] Use JSON + grep instead of chromadb for memory search" \
+  --from-text "[decision] Use JSON + grep instead of chromadb" \
   --apply
 ```
 
 ### knowledge-search
+
 Semantic search over your Markdown knowledge base using hybrid vector + full-text search.
 
 ```bash
@@ -118,6 +127,7 @@ bash ~/.ai-skills/knowledge-search/scripts/knowledge-search.sh "query" --preset 
 ```
 
 ### skill-observability
+
 Track which skills are used, how often, and by which agent.
 
 ```bash
@@ -132,7 +142,7 @@ python3 ~/.ai-skills/skill-observability/scripts/find-unused.py
 python3 ~/.ai-skills/skill-observability/scripts/report.py
 ```
 
-## RAG Engine (Optional)
+## ⚙️ RAG Engine (Optional)
 
 The RAG engine provides semantic search over Markdown knowledge bases using LanceDB vectors and Tantivy full-text search.
 
@@ -147,7 +157,7 @@ python3 rag-engine/knowledge_index.py --update ~/knowledge-base --db-path ~/.lan
 python3 rag-engine/knowledge_search.py "query" --mode hybrid --top 5
 ```
 
-## Writing Your Own Skills
+## 🔧 Writing Your Own Skills
 
 See [docs/skill-specification.md](docs/skill-specification.md) for the full specification, or use `templates/SKILL.md.template` as a starting point.
 
@@ -160,12 +170,20 @@ my-skill/
     └── my_script.py   # Entry point
 ```
 
-## Agent Setup Guides
+## 📚 Agent Setup Guides
 
 - [Claude Code](docs/agent-setup/claude.md)
 - [Gemini CLI](docs/agent-setup/gemini.md)
 - [Codex CLI](docs/agent-setup/codex.md)
 
-## License
+## 📄 License
 
 [MIT](LICENSE)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [Cloud927](https://github.com/cloud99277)**
+
+</div>
