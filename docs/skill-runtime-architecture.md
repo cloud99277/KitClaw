@@ -6,7 +6,7 @@ scope: dev
 
 # Skill Runtime Architecture — Skill 仓库与运行时架构
 
-> **目标**：解释 KitClaw、`927-ai-skills`、`agent-os-knowledge-base` 三者的关系，以及一个 skill 从仓库到运行时、从执行到治理的完整链路。
+> **目标**：解释 KitClaw、private 的 `927-ai-skills`、private 的 `agent-os-knowledge-base` 三者的关系，以及一个 skill 从仓库到运行时、从执行到治理的完整链路。
 
 ---
 
@@ -31,15 +31,15 @@ scope: dev
 | 仓库 | 定位 | 主要内容 | 对外角色 |
 |------|------|---------|---------|
 | `KitClaw` | 公开稳定发行版 | core skills、记忆 runtime、治理、文档 | 公开安装入口 |
-| `927-ai-skills` | 更大的运行时 skill 仓库 | 更多生产技能、方法论 skill、平台 skill | 生态层 |
-| `agent-os-knowledge-base` | L3 引擎上游 | Markdown 切分、索引、检索、RAG 相关演进 | 引擎层 |
+| `927-ai-skills`（private） | 更大的运行时 skill 仓库 | 更多生产技能、方法论 skill、平台 skill | 私有生态层 |
+| `agent-os-knowledge-base`（private） | L3 引擎上游 | Markdown 切分、索引、检索、RAG 相关演进 | 私有引擎上游 |
 
 简化理解：
 
 ```text
 KitClaw                = public curated core
-927-ai-skills          = full runtime catalog
-agent-os-knowledge-base = L3 engine upstream
+927-ai-skills (private) = full runtime catalog
+agent-os-knowledge-base (private) = L3 engine upstream
 ```
 
 ---
@@ -201,7 +201,7 @@ L1/L2/L3 路由
 
 ### Ecosystem Skills
 
-更大的 skill 生态可以继续放在 `927-ai-skills`，例如：
+更大的 skill 生态可以继续放在 private 的 `927-ai-skills` 仓库里，例如：
 
 - `skill-lint`
 - `history-reader`

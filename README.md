@@ -37,14 +37,14 @@ KitClaw is one part of a larger system. The three related repositories have diff
 | Repository | Role | What lives there |
 |---|---|---|
 | [`KitClaw`](https://github.com/cloud99277/KitClaw) | Public curated runtime | portable core skills, memory runtime, governance, docs |
-| [`927-ai-skills`](https://github.com/cloud99277/927-ai-skills) | Full runtime skills catalog | broader production skill library used across agents |
-| [`agent-os-knowledge-base`](https://github.com/cloud99277/agent-os-knowledge-base) | L3 engine upstream | the knowledge indexing/search engine as an independently evolving component |
+| `927-ai-skills` `(private)` | Full runtime skills catalog | broader production skill library used across agents, not publicly published as a repository |
+| `agent-os-knowledge-base` `(private)` | L3 engine upstream | the knowledge indexing/search engine as an independently evolving private upstream |
 
 Recommended mental model:
 
 ```text
-927-ai-skills        = broad skill ecosystem
-agent-os-knowledge-base = L3 search/indexing engine upstream
+927-ai-skills (private)        = broad skill ecosystem
+agent-os-knowledge-base (private) = L3 search/indexing engine upstream
 KitClaw              = stable public bundle that combines the core pieces
 ```
 
@@ -66,7 +66,7 @@ After installation:
 
 1. Edit `~/.ai-memory/config.json` and point `l3_paths` to your Markdown knowledge base.
 2. Copy `templates/AGENTS.md` to `~/AGENTS.md` and fill in your profile and routing rules.
-3. Read [docs/memory-architecture.md](docs/memory-architecture.md) and [docs/skill-runtime-architecture.md](docs/skill-runtime-architecture.md).
+3. Read [docs/memory-architecture.en.md](docs/memory-architecture.en.md) and [docs/skill-runtime-architecture.en.md](docs/skill-runtime-architecture.en.md).
 
 ## How Three-Layer Memory Works
 
@@ -250,13 +250,13 @@ python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
 
 ## Recommended Ecosystem Skills
 
-KitClaw intentionally keeps the public core small. If you want a richer shared skill environment, look at `927-ai-skills`.
+KitClaw intentionally keeps the public core small. A larger private `927-ai-skills` repo continues to hold the broader ecosystem; KitClaw only publishes the portable subset.
 
 Particularly relevant companion skills:
 
 - `skill-lint`: repository-wide lint for skill metadata and routing quality
 - `history-reader` / `history-chat`: agent-specific chat history adapters
-- domain-specific research, publishing, and automation skills from `927-ai-skills`
+- domain-specific research, publishing, and automation skills from the private `927-ai-skills` repo
 
 These are good ecosystem skills, but they are not required for the KitClaw core runtime.
 
@@ -277,8 +277,8 @@ python3 rag-engine/knowledge_search.py "query" --mode hybrid --top 5
 
 ## Docs
 
-- [Memory Architecture](docs/memory-architecture.md)
-- [Skill Runtime Architecture](docs/skill-runtime-architecture.md)
+- [Memory Architecture](docs/memory-architecture.en.md)
+- [Skill Runtime Architecture](docs/skill-runtime-architecture.en.md)
 - [Skill Specification](docs/skill-specification.md)
 - [Governance](docs/governance.md)
 

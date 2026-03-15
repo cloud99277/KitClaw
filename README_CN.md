@@ -37,14 +37,14 @@ KitClaw 只是整套体系中的一个公开内核。三个关联仓库各有职
 | 仓库 | 角色 | 放什么 |
 |---|---|---|
 | [`KitClaw`](https://github.com/cloud99277/KitClaw) | 公开稳定发行版 | 核心 skill、记忆 runtime、治理、文档 |
-| [`927-ai-skills`](https://github.com/cloud99277/927-ai-skills) | 完整运行时 skill 仓库 | 更大的生产级 skill 目录，供多 Agent 共用 |
-| [`agent-os-knowledge-base`](https://github.com/cloud99277/agent-os-knowledge-base) | L3 检索引擎上游 | 知识索引/搜索引擎的独立演进仓库 |
+| `927-ai-skills`（private） | 完整运行时 skill 仓库 | 更大的生产级 skill 目录，供多 Agent 共用，但仓库本身不公开 |
+| `agent-os-knowledge-base`（private） | L3 检索引擎上游 | 知识索引/搜索引擎的私有上游演进仓库 |
 
 推荐这样理解：
 
 ```text
-927-ai-skills            = 更大的 skill 生态
-agent-os-knowledge-base  = L3 检索引擎上游
+927-ai-skills（private）           = 更大的 skill 生态
+agent-os-knowledge-base（private） = L3 检索引擎上游
 KitClaw                  = 面向公开分发的稳定核心组合
 ```
 
@@ -249,13 +249,13 @@ python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
 
 ## 值得搭配的生态 Skill
 
-KitClaw 故意把公开核心保持得比较小。如果你想要更完整的共享 skill 环境，可以看 `927-ai-skills`。
+KitClaw 故意把公开核心保持得比较小。更大的 skill 生态目前继续放在 private 的 `927-ai-skills` 仓库里，KitClaw 只公开其中可移植、可共享的子集。
 
 尤其值得搭配的生态 skill：
 
 - `skill-lint`：对共享 skill 仓库做 metadata / routing 级 lint
 - `history-reader` / `history-chat`：各 agent 的历史对话 adapter
-- `927-ai-skills` 中更丰富的研究、内容生产、发布与自动化 skill
+- private 的 `927-ai-skills` 中更丰富的研究、内容生产、发布与自动化 skill
 
 这些 skill 很有价值，但不是 KitClaw 核心 runtime 的硬依赖。
 
