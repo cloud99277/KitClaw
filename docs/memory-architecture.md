@@ -1,166 +1,285 @@
+---
+title: "Memory Architecture"
+tags: [memory, architecture, knowledge-base]
+scope: dev
+---
+
 # Memory Architecture — 三层记忆模型
 
 > **所属 Skill**：`memory-manager`
-> **文档版本**：v1
-> **设计日期**：2026-03-08
+> **文档版本**：v2
+> **目标**：解释 L1 / L2 / L3 分别在什么时候触发、适合放什么，以及它们如何和 OpenClaw、Obsidian、共享 skill runtime 协同工作。
 
 ---
 
-## 一、三层模型概览
+## 一、总览
 
+KitClaw 把 Agent 记忆拆成三层，不是为了“多存几份数据”，而是为了把不同时间尺度、不同稳定性的内容放到最合适的地方。
+
+```text
+L1 = 始终加载的身份与规则
+L2 = 跨会话的短结论白板
+L3 = 长期稳定的 Markdown 知识库
 ```
-┌─────────────────────────────────────────────────────┐
-│               Agent Memory Stack                    │
-├─────────────────────────────────────────────────────┤
-│  L1 身份层（Identity Layer）                         │
-│  始终可用 · 定义 Agent 的行为规则和用户画像           │
-│  ~/.claude/CLAUDE.md  ~/.gemini/GEMINI.md  ...      │
-├─────────────────────────────────────────────────────┤
-│  L2 会话层（Session Layer / Whiteboard Memory）      │
-│  按需加载 · 跨会话持久化的 Decisions/Actions/Learnings│
-│  ~/.ai-memory/whiteboard.json                       │
-├─────────────────────────────────────────────────────┤
-│  L3 知识层（Knowledge Layer）                        │
-│  grep 检索 · 笔记/项目资料/研究素材                  │
-│  Obsidian vault · 本地 Markdown · sync-to-brain     │
-└─────────────────────────────────────────────────────┘
-```
+
+核心设计原则：
+
+1. **规则和用户画像** 不应该和项目知识混在一起
+2. **短结论** 不应该强行写成长文档
+3. **稳定知识** 不应该只留在某个 Agent 的私有记忆里
 
 ---
 
-## 二、各层详细规格
+## 二、三层记忆触发表
 
-### L1 身份层
+| 层级 | 触发时机 | 适合存放 | 不适合存放 | 主要工具 |
+|------|---------|---------|-----------|---------|
+| **L1 身份层** | Agent 启动时自动加载 | 用户画像、规则、长期偏好、行为边界 | 项目事实、临时 TODO、长文档 | `~/AGENTS.md`、agent 原生配置 |
+| **L2 白板层** | 对话中出现值得跨会话保留的短结论 | decision / action / learning | SOP、研究文档、教程、长报告 | `memory-manager`、`l2-capture` |
+| **L3 知识层** | 内容已经值得长期保留并支持检索 | 研究、SOP、架构文档、模板、提炼后的对话、Obsidian 笔记 | 太碎的临时想法、尚未定型的草稿 | `knowledge-search`、`conversation-distiller`、watcher/indexer |
 
-| 属性 | 说明 |
-|------|------|
-| **内容** | 人格设定、用户画像、行为规则、长期偏好 |
-| **文件** | `~/.claude/CLAUDE.md`、`~/.gemini/GEMINI.md`、`~/.codex/AGENTS.md` 等 |
-| **读写权限** | Agent 可读；用户手动维护（不由脚本自动写入） |
-| **加载策略** | 始终加载（Agent 启动时自动读取） |
-| **跨 Agent** | 各 Agent 独立维护自己的身份文件，共享部分可通过软链接 |
+---
 
-> **memory-manager 的角色**：L1 只读检索（`memory-search.py --layer=L1`），不写入。
+## 三、L1 身份层
 
-### L2 会话层（Whiteboard Memory）
+### 定义
 
-| 属性 | 说明 |
-|------|------|
-| **内容** | Decisions、Actions、Learnings（见 whiteboard-template.md） |
-| **文件** | `~/.ai-memory/whiteboard.json` |
-| **读写权限** | `memory-manager` 可读可写 |
-| **加载策略** | 按需检索（用关键词 grep，不全量加载） |
-| **跨 Agent** | 所有 Agent 共享同一个 whiteboard.json（跨 Agent 共享笔记本） |
-| **同步** | Git push/pull `~/.ai-memory/` 目录实现跨机器同步 |
+L1 是 Agent 每次启动都应立即具备的上下文。
 
-**Whiteboard JSON Schema**：
+### 典型内容
 
-```json
-{
-  "schema_version": "1.0",
-  "last_updated": "2026-03-08T22:00:00+08:00",
-  "entries": [
-    {
-      "id": "wb-001",
-      "type": "decision | action | learning",
-      "content": "决定使用 JSON + grep 而非 chromadb",
-      "project": "agent-os",
-      "tags": ["architecture", "memory"],
-      "created_at": "2026-03-08T20:00:00+08:00",
-      "source_conversation": "optional-conversation-id"
-    }
-  ]
-}
+- 用户画像
+- 语言偏好
+- 工作方式偏好
+- 不要做的事
+- 技术环境约束
+- 跨项目长期有效的行为规则
+
+### 典型路径
+
+- `~/AGENTS.md`
+- `~/.claude/CLAUDE.md`
+- `~/.gemini/GEMINI.md`
+- `~/.codex/AGENTS.md`
+
+### 为什么它不是 L2 / L3
+
+因为这些内容不是“某次会话的结论”，也不是“某个项目的知识文档”，而是 Agent 的默认运行条件。
+
+---
+
+## 四、L2 白板层
+
+### 定义
+
+L2 是跨会话的短结构化记忆，核心格式是：
+
+- `decision`
+- `action`
+- `learning`
+
+### 典型触发
+
+- 对话中明确选了 A 而不是 B
+- 形成了需要后续跟进的待办
+- 实施中发现了以后还会复用的坑或规律
+
+### 典型入口
+
+- `l2-capture`
+- `memory-manager/scripts/memory-update.py`
+
+### 适合的内容粒度
+
+L2 应该是**短结论**，不是长文档。
+
+好的例子：
+
+```text
+[decision] L3 默认使用 Markdown + LanceDB，不把向量数据库引入 L2。
+[action] 给 conversation-distiller 补通用路径配置和测试。
+[learning] OpenClaw 私有记忆适合草稿，不适合直接作为共享知识源。
 ```
 
-### L3 知识层
+不好的例子：
 
-| 属性 | 说明 |
-|------|------|
-| **内容** | 笔记、研究素材、项目文档、参考资料 |
-| **文件** | Obsidian vault、本地 Markdown、sync-to-brain 产出 |
-| **读写权限** | `memory-manager` 只读检索；写入由用户或其他 skill 负责 |
-| **加载策略** | grep 全文检索（不全量加载）|
-| **路径配置** | `~/.ai-memory/config.json` 中的 `l3_paths` 字段 |
+- 一篇完整调研报告
+- 一整段长对话原文
+- 一篇教程
 
-### Agent 原生记忆与共享记忆的边界
+这些应该放到 L3。
 
-有些 Agent 自己也有“长期记忆”文件，但这不等于共享知识库。
+---
 
-| 存储 | 性质 | 推荐内容 | 是否共享 |
+## 五、L3 知识层
+
+### 定义
+
+L3 是长期稳定、可被多个 Agent 与人类共同维护的 Markdown 知识库。
+
+### 典型来源
+
+- Obsidian vault
+- 项目文档目录
+- 研究笔记
+- SOP / 模板
+- `conversation-distiller` 产出的对话摘要
+
+### 典型入口
+
+- `knowledge-search`
+- `conversation-distiller`
+- `watch-knowledge-base.py`
+- `knowledge_index.py --update`
+
+### 路由原则
+
+当内容满足以下任一条件时，应优先进入 L3：
+
+- 未来会被多次检索
+- 需要人工长期维护
+- 结构化程度高于 L2
+- 已经从会话结论升级为正式知识
+
+---
+
+## 六、OpenClaw 与共享记忆的边界
+
+OpenClaw 自己有私有长期记忆与工作区记忆，但它们不等于共享知识层。
+
+| 存储 | 性质 | 建议用途 | 是否共享 |
 |------|------|---------|---------|
-| `~/.openclaw/workspace/MEMORY.md` | Agent 私有长期记忆 | 人设、用户偏好、渠道事实、Agent 自身习惯 | 否 |
-| `~/.openclaw/workspace/memory/YYYY-MM-DD.md` | Agent 私有原始日志 | 当日上下文、草稿、原始记录 | 否 |
-| `~/.ai-memory/whiteboard.json` | 共享 L2 | decision / action / learning | 是 |
-| `20_Knowledge_Base/` | 共享 L3 | 稳定文档、SOP、报告、模板、研究 | 是 |
+| `~/.openclaw/workspace/MEMORY.md` | Agent 私有长期记忆 | Agent 自身偏好、渠道事实、工作习惯 | 否 |
+| `~/.openclaw/workspace/memory/*.md` | Agent 私有原始上下文 | 草稿、当天记录、处理中间态 | 否 |
+| `~/.ai-memory/whiteboard.json` | 共享 L2 | 短结论、待办、经验教训 | 是 |
+| Obsidian / Markdown vault | 共享 L3 | 稳定知识、文档、研究、模板 | 是 |
 
 边界规则：
 
-1. Agent 私有记忆不应覆盖共享知识源
-2. 共享事实优先写入 `whiteboard.json` 或 `20_Knowledge_Base`
-3. 如果 Agent 私有记忆中的内容已经稳定、可复用，应提升到 L3，而不是只留在私有记忆里
+1. OpenClaw 私有记忆可以先快写，但稳定内容应提升到 L2 或 L3
+2. 私有草稿不是共享事实的唯一来源
+3. 共享知识最终应该落在 `whiteboard.json` 或 Markdown 知识库中
 
 ---
 
-## 三、存储路径决策记录
+## 七、Obsidian / Markdown 知识库联动
 
-| 候选路径 | 优势 | 劣势 | 决策 |
-|---------|------|------|------|
-| `~/.ai-memory/` | 独立于 skill 仓库，跨 Agent 共享自然，跨机器同步方便 | 需要额外约定 | ✅ 采用 |
-| `~/.ai-skills/.system/memory/` | 在 skill 仓库内，统一管理 | 与 skill 仓库耦合，skill 更新可能影响记忆数据 | ❌ 不采用 |
-| `~/Documents/ai-memory/` | 用户目录，可见性好 | 路径因 OS 而异，跨平台一致性差 | ❌ 不采用 |
+KitClaw 与 Obsidian 的关系，不是“替代编辑器”，而是“把 Markdown 变成共享知识层”。
 
-> **核心理由**：`~/.ai-memory/` 将 **数据与工具完全分离**。skill 仓库（`~/.ai-skills/`）可以随时更新、删除、重建，不会影响积累的记忆数据。这符合「工具是易替换的，数据是需要保护的」原则。
+典型链路：
 
----
-
-## 四、各 Agent 记忆能力对比
-
-| Agent | 原生记忆 | memory-manager 作用 |
-|-------|---------|-------------------|
-| **Claude Code** | ✅ 有原生 Memory（自动 + CLAUDE.md）| 补充 L2（Whiteboard）跨会话共享；提供 L3 统一检索 |
-| **Antigravity** | ✅ 有 KI（Knowledge Items）系统 | L2 补充不能写入 KI 的非正式决策；L3 检索本地资料 |
-| **OpenClaw** | ✅ 有 `MEMORY.md` + `memory/*.md` 工作区记忆 | 保留 OpenClaw 私有记忆，同时用 L2/L3 承担跨 Agent 共享事实与稳定知识 |
-| **Gemini CLI** | ❌ 无原生记忆 | **核心受益者**：L2 提供跨会话持久化，L1 提供行为规则 |
-| **Codex CLI** | ❌ 无原生记忆 | **核心受益者**：同 Gemini CLI |
-
----
-
-## 五、与现有 6 个记忆 Skill 的关系
-
-| 现有 Skill | 功能 | 与 memory-manager 的关系 |
-|-----------|------|------------------------|
-| `brain-link` | 生成记忆链接到 Obsidian | 产出存入 L3 → memory-search 可检索 |
-| `conversation-distiller` | 从对话提炼摘要 | 产出可作为 memory-update 的输入 |
-| `l2-capture` | 从原始总结或当前对话提炼 L2 条目 | L2 日常写入的优先入口；底层仍调用 memory-manager |
-| `history-reader` | 读取对话历史 | 辅助工具，为 memory-update 提供原始材料 |
-| `history-chat` | 与历史对话交互 | 独立 skill，互不干扰 |
-| `sync-to-brain` | 同步到 Obsidian | 产出存入 L3 |
-| `strategic-compact` | 战略摘要压缩 | 产出可作为 L2 条目写入 |
-
-> **设计原则**：memory-manager 是**检索和写入的统一接口**，不替换现有 skill，而是成为它们产出的消费者。
-
----
-
-## 六、跨机器同步策略
-
-L2 数据（`~/.ai-memory/`）通过 Git 同步：
-
-```bash
-# 推送到远程（工作机 → 家用机）
-cd ~/.ai-memory && git add -A && git commit -m "sync: $(date)" && git push
-
-# 从远程拉取
-cd ~/.ai-memory && git pull
+```text
+OpenClaw 私有记忆 / 对话结论
+    ↓ 提炼
+conversation-distiller 或手工整理
+    ↓
+Obsidian / Markdown 知识库
+    ↓
+ensure-knowledge-frontmatter.py
+    ↓
+knowledge_index.py --update
+    ↓
+knowledge-search / memory-manager
 ```
 
-> `~/.ai-memory/` 建议初始化为独立 Git 仓库（私有），与 `~/.ai-skills/` 分开管理。
+这条链路的好处：
+
+- 人类仍然用 Obsidian 编辑
+- Agent 不必全量读库，只做检索
+- 多个 Agent 可以共享同一个 L3
+- 文档仍然是 Git 文件，可审计、可同步
 
 ---
 
-## 七、设计约束
+## 八、典型工作流
 
-1. **零外部依赖**：纯 Python stdlib + subprocess（grep/ripgrep）
-2. **不引入向量数据库**：JSON + grep 覆盖 80% 场景，不值得引入 chromadb
-3. **单 Agent 写入假设**：同一时刻只有一个 Agent 写入 whiteboard.json，不做并发锁
-4. **数据格式版本化**：所有 JSON 文件含 `schema_version` 字段，破坏性变更需迁移脚本
+### 工作流 1：当前会话沉淀成 L2
+
+```text
+用户 / Agent 形成一个明确结论
+    ↓
+l2-capture
+    ↓
+~/.ai-memory/whiteboard.json
+    ↓
+后续会话 memory-manager 检索
+```
+
+### 工作流 2：当前会话升级成 L3 文档
+
+```text
+问题已解决，过程值得复用
+    ↓
+conversation-distiller
+    ↓
+写入 L3 Markdown 目录
+    ↓
+frontmatter + 增量索引
+    ↓
+knowledge-search 可检索
+```
+
+### 工作流 3：Obsidian 文档自动进入共享知识
+
+```text
+人在 Obsidian 中修改 Markdown
+    ↓
+watch-knowledge-base.py 发现变化
+    ↓
+自动补全 frontmatter
+    ↓
+增量更新 LanceDB 索引
+    ↓
+所有 Agent 都能搜到
+```
+
+---
+
+## 九、为什么 L2 和 L3 要分开
+
+因为它们解决的是不同问题：
+
+- **L2** 优化的是“跨会话短结论复用”
+- **L3** 优化的是“长期知识沉淀与检索”
+
+如果把两者混成一个层：
+
+- 要么短结论被淹没在长文档里
+- 要么长文档被强行塞进结构化 JSON
+
+分层之后：
+
+- L2 保持短、快、可直接回读
+- L3 保持人类可维护、Agent 可检索
+
+---
+
+## 十、路径与同步
+
+### L2
+
+- 数据目录：`~/.ai-memory/`
+- 白板：`~/.ai-memory/whiteboard.json`
+- 配置：`~/.ai-memory/config.json`
+
+### L3
+
+- 路径来源：`~/.ai-memory/config.json` 的 `l3_paths`
+- 默认模板值：`~/knowledge-base`
+- 可接 Obsidian、本地 Markdown 目录、项目 docs 目录
+
+### 同步建议
+
+- `~/.ai-memory/` 单独 Git 管理
+- L3 Markdown 知识库单独 Git 管理
+- skill 仓库与数据仓库分离
+
+---
+
+## 十一、设计约束
+
+1. **数据与工具分离**：记忆数据不和 skill 仓库绑定
+2. **L2 优先结构化短结论**：不把它变成 mini knowledge base
+3. **L3 优先 Markdown**：保持人类可编辑、Git 友好
+4. **按需加载，不全量加载**：Agent 主要通过 search/retrieval 使用 L2/L3
+5. **共享知识优先提升**：稳定内容不要只留在某个 Agent 的私有记忆里

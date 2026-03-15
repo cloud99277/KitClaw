@@ -11,105 +11,177 @@
 
 </div>
 
-KitClaw is an open-source infrastructure toolkit that gives your existing CLI AI agents (Claude Code, Gemini CLI, Codex CLI, etc.) superpowers they don't have out of the box. It doesn't create or orchestrate agents — it **enhances** the ones you already use.
+KitClaw is an open-source infrastructure toolkit for existing CLI agents such as Claude Code, Gemini CLI, Codex CLI, OpenClaw, and similar terminal-native assistants.
+
+It does not create or orchestrate agents. It gives the agents you already use a shared runtime for:
+
+- `L1 / L2 / L3` memory
+- portable executable skills
+- knowledge-base ingestion and retrieval
+- execution observability
+- repository-level governance
 
 ## ✨ Features
 
-- 🧠 **Three-Layer Memory** — L1 (identity profile), L2 (session whiteboard), L3 (knowledge base with RAG)
-- 🔧 **Unified Skill Framework** — Executable Python/Bash scripts with standardized `SKILL.md` contracts
-- 📊 **Built-in Observability** — Automatic JSONL execution logs for every skill run, usage reports, unused skill detection
-- 🏛️ **Governance Tools** — Pre-commit hooks, document auditing, and constitutional rules for your knowledge base
-- 🪶 **Zero-Dependency Core** — L2 memory runs on pure Python stdlib; RAG engine is optional
+- 🧠 **Three-Layer Memory**: L1 identity, L2 session whiteboard, L3 Markdown knowledge base with optional RAG
+- 🔧 **Unified Skill Runtime**: `SKILL.md` contracts plus executable `scripts/` entry points
+- 📝 **Conversation-to-Knowledge Distillation**: save the current conversation into L3 and auto-ingest it
+- 📊 **Built-in Observability**: JSONL execution logs and usage reports
+- 🏛️ **Governance**: frontmatter validation, document auditing, and repo hygiene checks
+- 🪶 **Curated Core**: a small public core, with a larger ecosystem living in the shared skills repo
 
-## 🤔 How is KitClaw Different?
+## Project Family
 
-| | **AG2 (AutoGen)** | **AgentLoom** | **KitClaw** |
-|---|---|---|---|
-| **Purpose** | Create & orchestrate agents | Sync config across tools | Add memory & skills to existing agents |
-| **Skills** | N/A | Markdown prompts | Executable Python/Bash scripts |
-| **Memory** | None built-in | None | Three-layer model (L1/L2/L3) |
-| **Observability** | None | Basic telemetry | Execution logs + usage reports |
-| **Dependencies** | Heavy (Python framework) | Node.js | Zero for core, optional for RAG |
+KitClaw is one part of a larger system. The three related repositories have different responsibilities:
+
+| Repository | Role | What lives there |
+|---|---|---|
+| [`KitClaw`](https://github.com/cloud99277/KitClaw) | Public curated runtime | portable core skills, memory runtime, governance, docs |
+| [`927-ai-skills`](https://github.com/cloud99277/927-ai-skills) | Full runtime skills catalog | broader production skill library used across agents |
+| [`agent-os-knowledge-base`](https://github.com/cloud99277/agent-os-knowledge-base) | L3 engine upstream | the knowledge indexing/search engine as an independently evolving component |
+
+Recommended mental model:
+
+```text
+927-ai-skills        = broad skill ecosystem
+agent-os-knowledge-base = L3 search/indexing engine upstream
+KitClaw              = stable public bundle that combines the core pieces
+```
 
 ## 🚀 Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/cloud99277/kitclaw.git
-cd kitclaw
+git clone https://github.com/cloud99277/KitClaw.git
+cd KitClaw
 
-# Install core skills (zero dependencies)
+# Install core skills (zero-dependency core runtime)
 bash install.sh
 
-# Optional: Install RAG engine for semantic search
+# Optional: install the RAG engine runtime
 bash install.sh --with-rag
 ```
 
 After installation:
 
-1. Edit `~/.ai-memory/config.json` to set your knowledge base path
-2. Copy `templates/AGENTS.md` to `~/AGENTS.md` and fill in your profile
-3. Read `docs/memory-architecture.md` to understand the memory model
+1. Edit `~/.ai-memory/config.json` and point `l3_paths` to your Markdown knowledge base.
+2. Copy `templates/AGENTS.md` to `~/AGENTS.md` and fill in your profile and routing rules.
+3. Read [docs/memory-architecture.md](docs/memory-architecture.md) and [docs/skill-runtime-architecture.md](docs/skill-runtime-architecture.md).
 
-## 🏗️ Architecture
+## How Three-Layer Memory Works
 
+The three layers are not just storage locations. They are triggered by different situations.
+
+| Layer | Trigger | Best for | Main tools |
+|---|---|---|---|
+| **L1 Identity** | Loaded when the agent session starts | profile, rules, preferences, behavior defaults | `~/AGENTS.md`, agent-native config |
+| **L2 Whiteboard** | Triggered when you want to keep a short reusable conclusion across sessions | decisions, actions, learnings | `memory-manager`, `l2-capture` |
+| **L3 Knowledge** | Triggered when content should become stable documentation or searchable notes | research, SOPs, architecture docs, distilled conversations, Obsidian notes | `knowledge-search`, `conversation-distiller`, watcher/indexer |
+
+### Typical Memory Routes
+
+1. **Session conclusion → L2**
+   Use `l2-capture` when a conversation produces a clear decision, next action, or reusable lesson.
+
+2. **Solved conversation → L3**
+   Use `conversation-distiller` when the result deserves a structured Markdown note that should remain searchable later.
+
+3. **Markdown vault / Obsidian update → L3 index**
+   Use the watcher or run incremental indexing when notes change in your knowledge base.
+
+## OpenClaw + Obsidian Workflow
+
+OpenClaw and Obsidian fit naturally into the KitClaw model, but they play different roles.
+
+```text
+OpenClaw private memory / workspace notes
+    ↓ distill or formalize
+Obsidian / Markdown knowledge vault
+    ↓ frontmatter completion
+KitClaw rag-engine incremental indexing
+    ↓
+knowledge-search / memory-manager
+    ↓
+Claude / Gemini / Codex / OpenClaw all query the same shared L3
 ```
-┌──────────────────────────────────────────────────────┐
-│                      KitClaw                         │
-├──────────────────────────────────────────────────────┤
-│                                                      │
-│  L1 Identity      ~/AGENTS.md (user profile + rules) │
-│  ────────────────────────────────────────────────     │
-│  L2 Session       ~/.ai-memory/whiteboard.json       │
-│                   (decisions / actions / learnings)   │
-│  ────────────────────────────────────────────────     │
-│  L3 Knowledge     Your Markdown vault + LanceDB RAG  │
-│  ────────────────────────────────────────────────     │
-│  Skills           ~/.ai-skills/ (symlinked)           │
-│  ────────────────────────────────────────────────     │
-│  Observability    ~/.ai-skills/.logs/executions.jsonl │
-│  ────────────────────────────────────────────────     │
-│  Governance       Pre-commit hooks + Auditor          │
-│                                                      │
-│  Works with: Claude · Gemini · Codex · Any CLI AI    │
-└──────────────────────────────────────────────────────┘
+
+Practical boundary:
+
+- **OpenClaw private memory** is for drafts, day-level context, and agent-private working state.
+- **Obsidian / L3** is for stable, shared, human-editable knowledge.
+- **KitClaw** turns those Markdown documents into a cross-agent searchable layer.
+
+## Skill Runtime Architecture
+
+KitClaw ships a public core, but the runtime model is bigger than this repo.
+
+```text
+KitClaw/core-skills/      ── install.sh ──> ~/.ai-skills/
+                                        ├─ ~/.claude/skills -> symlink
+                                        ├─ ~/.codex/skills  -> symlink
+                                        ├─ ~/.gemini/skills -> symlink
+                                        └─ ~/.agents/skills -> symlink
 ```
+
+At execution time:
+
+```text
+Agent request
+  -> route to a skill via SKILL.md
+  -> run scripts/<entrypoint>
+  -> optionally read/write L2 or L3
+  -> write observability log
+  -> stay inside governance constraints
+```
+
+This is why KitClaw skills are not just prompt snippets. A skill is a portable runtime unit with:
+
+- metadata and routing in `SKILL.md`
+- executable behavior in `scripts/`
+- optional references/templates in `references/`
+- optional tests
 
 ## 📦 Directory Structure
 
-```
-kitclaw/
-├── install.sh                 # One-command installer
-├── core-skills/               # Ships with KitClaw
-│   ├── memory-manager/        # L1/L2/L3 search + L2 write + L3 watcher
-│   ├── l2-capture/            # Convenient L2 write helper
-│   ├── knowledge-search/      # L3 semantic search wrapper
-│   └── skill-observability/   # Execution logging + usage reports
-├── rag-engine/                # Optional: LanceDB vector + FTS engine
-├── governance/                # Pre-commit hooks + document auditor
-├── templates/                 # Starter files for new users
-├── docs/                      # Architecture & specification docs
-├── tests/                     # Test suite
-└── examples/                  # Sample knowledge vault
+```text
+KitClaw/
+├── install.sh
+├── core-skills/
+│   ├── memory-manager/
+│   ├── l2-capture/
+│   ├── conversation-distiller/
+│   ├── knowledge-search/
+│   ├── skill-observability/
+│   ├── mcp-export/
+│   └── skill-security-audit/
+├── rag-engine/
+├── governance/
+├── templates/
+├── docs/
+├── tests/
+└── examples/
 ```
 
-## 📖 Core Skills
+## 📖 Bundled Skills
+
+KitClaw bundles both runtime memory skills and a small set of governance /
+interoperability skills that are broadly useful when open sourcing a shared
+agent runtime.
+
+### Runtime Memory Skills
 
 ### memory-manager
 
-Search across all three memory layers with a single command.
+Search across L1, L2, and L3 from one command.
 
 ```bash
-# Search everything
 python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "keyword"
-
-# Search only L2 whiteboard
 python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "keyword" --layer=L2
 ```
 
 ### l2-capture
 
-Extract decisions, actions, and learnings from conversations into the shared whiteboard.
+Convert raw conversation conclusions into structured L2 entries.
 
 ```bash
 python3 ~/.ai-skills/l2-capture/scripts/l2_capture.py \
@@ -118,9 +190,26 @@ python3 ~/.ai-skills/l2-capture/scripts/l2_capture.py \
   --apply
 ```
 
+### conversation-distiller
+
+Turn the just-finished conversation into a Markdown note in L3.
+
+```bash
+cat >/tmp/distill.json <<'JSON'
+{
+  "title": "[Dev] Port conflict debugging",
+  "content": "## Background\n...\n\n## Final Fix\n..."
+}
+JSON
+
+python3 ~/.ai-skills/conversation-distiller/scripts/save_note.py \
+  --json /tmp/distill.json \
+  --print-json
+```
+
 ### knowledge-search
 
-Semantic search over your Markdown knowledge base using hybrid vector + full-text search.
+Search your L3 knowledge base using hybrid vector + full-text retrieval.
 
 ```bash
 bash ~/.ai-skills/knowledge-search/scripts/knowledge-search.sh "query" --preset coding
@@ -128,34 +217,70 @@ bash ~/.ai-skills/knowledge-search/scripts/knowledge-search.sh "query" --preset 
 
 ### skill-observability
 
-Track which skills are used, how often, and by which agent.
+Track which skills run, how often, and by which agent.
 
 ```bash
-# Log an execution
 python3 ~/.ai-skills/skill-observability/scripts/log-execution.py \
-  --skill memory-manager --agent gemini --status success
-
-# Find unused skills
-python3 ~/.ai-skills/skill-observability/scripts/find-unused.py
-
-# Generate usage report
-python3 ~/.ai-skills/skill-observability/scripts/report.py
+  --skill memory-manager --agent codex --status success
 ```
 
-## ⚙️ RAG Engine (Optional)
+### Governance and Interoperability Skills
 
-The RAG engine provides semantic search over Markdown knowledge bases using LanceDB vectors and Tantivy full-text search.
+### mcp-export
+
+Export KitClaw skill metadata as MCP-compatible `tools/list` JSON.
 
 ```bash
-# Install with RAG support
+python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --pretty
+python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py \
+  --skills-dir ~/.ai-skills \
+  --output /tmp/tools.json
+```
+
+### skill-security-audit
+
+Run static security checks against one skill or an entire shared skills repo.
+
+```bash
+python3 ~/.ai-skills/skill-security-audit/scripts/audit.py --all
+python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
+  ~/.ai-skills/conversation-distiller \
+  --json
+```
+
+## Recommended Ecosystem Skills
+
+KitClaw intentionally keeps the public core small. If you want a richer shared skill environment, look at `927-ai-skills`.
+
+Particularly relevant companion skills:
+
+- `skill-lint`: repository-wide lint for skill metadata and routing quality
+- `history-reader` / `history-chat`: agent-specific chat history adapters
+- domain-specific research, publishing, and automation skills from `927-ai-skills`
+
+These are good ecosystem skills, but they are not required for the KitClaw core runtime.
+
+## ⚙️ RAG Engine
+
+The RAG engine is optional, but it is what turns Markdown knowledge into semantic L3 retrieval.
+
+```bash
+# Install the runtime
 bash install.sh --with-rag
 
-# Build index
+# Build or update the index
 python3 rag-engine/knowledge_index.py --update ~/knowledge-base --db-path ~/.lancedb/knowledge
 
-# Search
+# Query it directly
 python3 rag-engine/knowledge_search.py "query" --mode hybrid --top 5
 ```
+
+## Docs
+
+- [Memory Architecture](docs/memory-architecture.md)
+- [Skill Runtime Architecture](docs/skill-runtime-architecture.md)
+- [Skill Specification](docs/skill-specification.md)
+- [Governance](docs/governance.md)
 
 ## 🛠️ Contributor Setup
 
@@ -164,24 +289,13 @@ python3 rag-engine/knowledge_search.py "query" --mode hybrid --top 5
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 
-# Install the repo pre-commit hook
+# Install the repository hook
 bash governance/hooks/install.sh
 
-# Run the test suite
+# Run verification
 .venv/bin/python -m pytest tests
-```
-
-## 🔧 Writing Your Own Skills
-
-See [docs/skill-specification.md](docs/skill-specification.md) for the full specification, or use `templates/SKILL.md.template` as a starting point.
-
-A minimal skill is just 3 files:
-
-```
-my-skill/
-├── SKILL.md           # YAML frontmatter + usage docs
-└── scripts/
-    └── my_script.py   # Entry point
+.venv/bin/ruff check .
+.venv/bin/pyright
 ```
 
 ## 📚 Agent Setup Guides
