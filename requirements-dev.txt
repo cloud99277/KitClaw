@@ -1,0 +1,5 @@
+-r src/rag/requirements.txt
+pytest>=9.0.0
+pytest-cov>=7.0.0
+ruff>=0.15.0
+pyright>=1.1.0

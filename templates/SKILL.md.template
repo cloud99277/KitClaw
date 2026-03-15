@@ -1,0 +1,41 @@
+---
+name: <skill-name>
+description: >
+  <One-paragraph description of what this skill does, when to use it, and when NOT to use it.
+  Include trigger keywords in both English and Chinese for better agent matching.>
+io:
+  input:
+    - type: text
+      description: <what the skill takes as input>
+  output:
+    - type: json_data
+      description: <what the skill produces>
+---
+
+# <Skill Name>
+
+## What It Does
+
+<2-3 sentences explaining the skill's purpose.>
+
+## Quick Start
+
+```bash
+python3 ~/.ai-skills/<skill-name>/scripts/<main-script>.py --help
+```
+
+## Usage Examples
+
+```bash
+# Example 1: basic usage
+python3 ~/.ai-skills/<skill-name>/scripts/<main-script>.py "input"
+
+# Example 2: with options
+python3 ~/.ai-skills/<skill-name>/scripts/<main-script>.py "input" --json
+```
+
+## Design Constraints
+
+- Zero external dependencies (pure Python stdlib) unless absolutely necessary
+- If dependencies are needed, list them in `requirements.txt` at skill root
+- All output should be structured JSON when `--json` flag is used

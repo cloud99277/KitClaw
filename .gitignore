@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+.lancedb/
+*.jsonl
+.ai-memory/
+.env
+.DS_Store
