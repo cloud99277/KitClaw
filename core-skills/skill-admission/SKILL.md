@@ -53,12 +53,26 @@ python3 ~/.ai-skills/skill-admission/scripts/admit.py ~/.ai-skills/<skill-name> 
 ## 收编流程
 
 ```
-1. 运行 admission 检查
-2. 修复所有 FAIL 项
-3. 评估 WARNING 项（能修就修）
-4. 通过后 copy 到 KitClaw 主仓库的 skills/ 目录
-5. git add + commit（pre-commit hook 自动跑安全审计 + lint）
+1. 运行 admission 检查（原件上跑，不修改原件）
+2. 复制到公开仓库（cp -r）
+3. 在副本上修复所有 FAIL 项
+4. 路径通用化（/home/xxx → $HOME 或通用写法）
+5. 删除非标辅助文件（README.md、banner 等）
+6. 通过 KitClaw pre-commit hook（自动校验 frontmatter + 安全）
+7. git add + commit + push
 ```
+
+## Frontmatter 校验规则（pre-commit hook）
+
+KitClaw 的 `validate_frontmatter.py` 对不同文件有不同要求：
+
+| 文件类型 | 必填 (阻塞提交) | 推荐 (warning, 不阻塞) |
+|---|---|---|
+| **SKILL.md** | `name` + `description` | `tags`, `scope` |
+| **references/\*.md** | frontmatter 存在即可 | 无 |
+| **其他 .md** | `title` | `tags`, `scope` |
+
+SKILL.md 只需 `name` + `description`，与本地 skill 规范一致，不需要额外加 `title`。
 
 ## ⚠️ 关键规则：不要动原件
 
@@ -67,7 +81,7 @@ python3 ~/.ai-skills/skill-admission/scripts/admit.py ~/.ai-skills/<skill-name> 
 原因：
 - `~/.ai-skills/` 是用户私有工作环境，包含个人路径、API key 引用、Agent 专属配置
 - 公开仓库需要通用化处理（去掉硬编码路径、适配多 Agent），但原件需要保留以便日常使用
-- 两边可能有不同的治理标准（KitClaw 要求 `title` 字段，私有环境可能不需要）
+- KitClaw 治理 hook 已与本地规范对齐（SKILL.md 只需 name+description），两边标准一致
 
 正确做法：
 
