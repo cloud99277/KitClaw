@@ -269,7 +269,42 @@ kitclaw governance log --skill context-engine --since 2026-04-01
 kitclaw governance audit --skill-dir ~/.ai-skills/
 ```
 
-## 7. 与其他引擎的交互
+## 7. Skill 标准治理（v1 经验提炼）
+
+v1 阶段确立了 skill frontmatter 的分层校验标准，v2 直接继承：
+
+### 7.1 分层 Frontmatter 校验
+
+| 文件类型 | 必填 (阻塞) | 推荐 (warn) | 原则 |
+|---|---|---|---|
+| **SKILL.md** | `name` + `description` | `tags`, `scope` | 本地 skill 规范优先 |
+| **references/\*.md** | frontmatter 存在 | 无 | 按需加载，宽松 |
+| **其他 .md** | `title` | `tags`, `scope` | 通用文档标准 |
+
+**设计原则**：必填字段 = 路由最小契约。`name` + `description` 是所有 Agent（Claude、Codex、Gemini）路由 skill 的唯一依据，必须保证。`tags`/`scope` 是治理增强，warning 级别。
+
+### 7.2 Skill Admission 质量关口
+
+进入 KitClaw core-skills 的 skill 必须通过 7 项检查：
+
+1. **Lint 通过** — frontmatter 格式、命名规范、路由质量
+2. **安全审计** — 无硬编码密钥、无危险命令模式
+3. **无个人依赖** — 无硬编码用户路径（`/home/xxx`）
+4. **Agent 无关** — 不依赖特定 Agent 的语法或功能
+5. **自包含** — 所有引用文件在 skill 内部存在
+6. **文档完整** — SKILL.md 有使用说明和示例
+7. **结构干净** — 无 README.md、banner 等非标准文件
+
+### 7.3 公开仓库结构
+
+```
+KitClaw (公开)              = 16 个平台核心 skill + runtime
+ai-skills-hub (公开)        = 62 个领域 skill，按需安装
+```
+
+原则：公开仓库只放通过 admission 的 skill。原件（`~/.ai-skills/`）不修改，公开副本做通用化处理。
+
+## 8. 与其他引擎的交互
 
 | 方向 | 交互 |
 |------|------|

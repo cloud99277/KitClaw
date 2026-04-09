@@ -29,20 +29,27 @@ tags: [governance, policy]
 
 ## §1 文档质量标准
 
-### 必须遵守
+### 分层 Frontmatter 校验（v1.1 更新）
+
+不同文件类型有不同的必填要求，由 pre-commit hook (`validate_frontmatter.py`) 执行：
+
+| 文件类型 | 必填 (Error, 阻塞提交) | 推荐 (Warning, 不阻塞) | 执行方式 |
+|---|---|---|---|
+| **SKILL.md** | `name` + `description` | `tags`, `scope` | pre-commit hook |
+| **references/\*.md** | frontmatter 存在即可 | 无 | pre-commit hook |
+| **其他 .md**（docs 等） | `title` | `tags`, `scope` | pre-commit hook |
+
+**设计原则**：
+- `name` + `description` 是所有 Agent 路由 skill 的唯一依据，这是 skill 的最小契约。
+- `tags`/`scope` 是治理增强，对路由不关键，warning 级别。
+- reference 文件按需加载，只要结构合法就行，不强制特定字段。
+
+### 其他规则
 
 | 规则 | 严重度 | 执行方式 |
 |------|--------|---------|
-| frontmatter 必须含 `title` | Error | pre-commit hook |
 | 文档必须有一级标题（`#`） | Error | Auditor 巡检 |
 | frontmatter `expires` 超期的文档不可引用 | Error | Auditor 巡检 |
-
-### 建议遵守
-
-| 规则 | 严重度 | 执行方式 |
-|------|--------|---------|
-| frontmatter 含 `tags` | Warning | pre-commit hook |
-| frontmatter 含 `scope` | Warning | Auditor 巡检 |
 | 调研文档必须有来源引用 | Warning | Auditor 巡检 |
 
 ---

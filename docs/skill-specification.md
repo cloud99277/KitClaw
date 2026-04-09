@@ -1,3 +1,8 @@
+---
+name: skill-specification
+title: KitClaw Skill Specification
+---
+
 # KitClaw Skill Specification v1.0
 
 > This document defines the standard contract for KitClaw-compatible skills.
@@ -20,12 +25,18 @@ Every skill must follow this structure:
 
 ### YAML Frontmatter (Required)
 
+KitClaw 使用分层 frontmatter 标准，与本地 skill 规范保持一致：
+
 ```yaml
 ---
 name: <skill-name>          # Required: kebab-case, unique
 description: >              # Required: One paragraph, include trigger keywords
   <What it does. When to use it. When NOT to use it.
   Include Chinese trigger keywords for bilingual agent matching.>
+tags:                        # Recommended: categorization
+  - dev
+  - code-review
+scope: dev                   # Recommended: dev | content | personal | archive
 io:                          # Recommended
   input:
     - type: text|file|json_data
@@ -35,6 +46,23 @@ io:                          # Recommended
       description: <what the skill produces>
 ---
 ```
+
+**核心原则：`name` + `description` 是唯一必填字段。** 这两个字段支撑了 skill 路由（Agent 根据 description 决定何时调用 skill）。
+
+### Frontmatter 分层规则
+
+不同文件类型有不同的必填要求，由 KitClaw 治理 hook (`validate_frontmatter.py`) 执行：
+
+| 文件类型 | 必填 (error, 阻塞提交) | 推荐 (warning, 不阻塞) |
+|---|---|---|
+| **SKILL.md** | `name` + `description` | `tags`, `scope` |
+| **references/\*.md** | frontmatter 存在即可 | 无 |
+| **其他 .md**（docs 等） | `title` | `tags`, `scope` |
+
+设计理由：
+- **本地 skill 规范优先**：`name` + `description` 是所有 Agent（Claude、Codex、Gemini）路由的依据，这是 skill 的最小契约。
+- **治理层增量**：`tags` 和 `scope` 是 KitClaw 特有的分类增强，对路由不关键，所以设为 warning。
+- **reference 文件宽松**：reference 文件按需加载，只要结构合法就行，不强制特定字段。
 
 ### Markdown Body
 
