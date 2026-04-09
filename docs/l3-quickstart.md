@@ -26,8 +26,6 @@ bash install.sh --with-rag
 - `python-frontmatter` — YAML frontmatter 解析
 - `pandas` — 数据处理
 
-首次运行需要下载 Embedding 模型（`BAAI/bge-small-zh-v1.5`，约 90MB），需要能访问 Hugging Face。
-
 ## 2. 配置知识库路径
 
 ```bash
@@ -45,8 +43,7 @@ cp rag-engine/config.example.json ~/.ai-memory/config.json
     "/path/to/your/knowledge-base"
   ],
   "embedding": {
-    "mode": "local",
-    "local_model": "BAAI/bge-small-zh-v1.5"
+    "mode": "api"
   },
   "index": {
     "db_path": "~/.lancedb/knowledge"
@@ -55,8 +52,47 @@ cp rag-engine/config.example.json ~/.ai-memory/config.json
 ```
 
 - `l3_paths`：你的 Markdown 知识库目录路径（支持多个目录）
-- `embedding.mode`：`local`（本地模型，默认）或 `api`（需要 OpenAI API key）
+- `embedding.mode`：`api`（默认，需要 OpenAI key）或 `local`（本地模型，需下载 ~90MB）
 - `index.db_path`：向量索引存储位置
+
+## 2.1 Embedding 模式选择
+
+**API 模式（推荐，最简单）**：
+
+只需设环境变量 `OPENAI_API_KEY`（或兼容 API 的 key），不需要下载任何模型。
+
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+
+如果你用的是第三方兼容 API（比如 DeepSeek、Moonshot），同时设置 base URL：
+
+```json
+{
+  "embedding": {
+    "mode": "api",
+    "api_base": "https://api.deepseek.com/v1"
+  }
+}
+```
+
+**本地模式（无需 API，需下载模型）**：
+
+将 `mode` 改为 `local`，首次运行会自动下载 `BAAI/bge-small-zh-v1.5`（~90MB），需要能访问 Hugging Face。
+
+```json
+{
+  "embedding": {
+    "mode": "local",
+    "local_model": "BAAI/bge-small-zh-v1.5"
+  }
+}
+```
+
+CLI 参数可以覆盖 config.json 的配置：
+```bash
+python3 rag-engine/knowledge_index.py --embedding-mode api --full ~/knowledge-base
+```
 
 ## 3. 首次索引
 

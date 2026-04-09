@@ -387,13 +387,31 @@ def do_clear(db_path: str):
 
 # ---------- CLI ----------
 
+CONFIG_PATH = os.path.expanduser("~/.ai-memory/config.json")
+
+
+def _load_config() -> dict:
+    """Load config.json if it exists."""
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
 def main():
+    config = _load_config()
+    embedding_cfg = config.get("embedding", {})
+
     parser = argparse.ArgumentParser(
         description='Knowledge Index Engine (LanceDB)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument('--version', action='version', version=f'knowledge_index {__version__}')
-    parser.add_argument('--db-path', default=DEFAULT_DB_PATH, help=f'LanceDB path (default: {DEFAULT_DB_PATH})')
+    parser.add_argument('--db-path', default=config.get("index", {}).get("db_path", DEFAULT_DB_PATH),
+                        help=f'LanceDB path (default from config or {DEFAULT_DB_PATH})')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--full', metavar='DIR', help='Full index of directory')
@@ -401,8 +419,12 @@ def main():
     group.add_argument('--status', action='store_true', help='Show index status')
     group.add_argument('--clear', action='store_true', help='Clear index')
 
-    parser.add_argument('--embedding-mode', choices=['local', 'api'], default='local', help='Embedding mode')
-    parser.add_argument('--model', default='BAAI/bge-small-zh-v1.5', help='Local embedding model')
+    parser.add_argument('--embedding-mode', choices=['local', 'api'],
+                        default=embedding_cfg.get("mode", "local"),
+                        help='Embedding mode (default from config.json)')
+    parser.add_argument('--model',
+                        default=embedding_cfg.get("local_model", "BAAI/bge-small-zh-v1.5"),
+                        help='Local embedding model name')
 
     args = parser.parse_args()
 

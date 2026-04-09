@@ -1,6 +1,6 @@
 {
   "embedding": {
-    "mode": "local",
+    "mode": "api",
     "local_model": "BAAI/bge-small-zh-v1.5",
     "api_model": "text-embedding-3-small",
     "api_base": "https://api.openai.com/v1"
