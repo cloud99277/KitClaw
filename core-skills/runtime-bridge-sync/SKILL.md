@@ -1,6 +1,5 @@
 ---
 name: runtime-bridge-sync
-title: "Runtime Bridge Sync"
 tags: [runtime, bridge, governance]
 scope: dev
 description: >

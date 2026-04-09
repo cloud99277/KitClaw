@@ -1,7 +1,5 @@
 ---
-title: "Memory Architecture Reference"
-tags: [memory, architecture, reference]
-scope: dev
+name: memory-architecture
 ---
 
 # Memory Architecture Reference

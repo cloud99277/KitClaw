@@ -1,7 +1,5 @@
 ---
 name: mcp-schema-mapping
-title: Mcp Schema Mapping
-type: reference
 ---
 # MCP Schema Mapping — SKILL.md → MCP Tool JSON 映射规则
 

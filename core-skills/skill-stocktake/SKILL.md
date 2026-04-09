@@ -1,6 +1,5 @@
 ---
 name: skill-stocktake
-title: skill-stocktake
 description: "Quality audit workflow for Claude skills and commands, with Quick Scan and Full Stocktake modes. Use when reviewing a skill library for overlap, staleness, or improvement opportunities."
 ---
 

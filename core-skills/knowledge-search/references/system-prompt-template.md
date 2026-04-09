@@ -1,7 +1,5 @@
 ---
 name: system-prompt-template
-title: System Prompt Template
-type: reference
 ---
 # 知识库搜索协议 — System Prompt 模板
 

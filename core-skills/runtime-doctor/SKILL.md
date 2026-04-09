@@ -1,6 +1,5 @@
 ---
 name: runtime-doctor
-title: "Runtime Doctor"
 tags: [runtime, governance, diagnostics]
 scope: dev
 description: >

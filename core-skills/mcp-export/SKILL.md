@@ -1,6 +1,5 @@
 ---
 name: mcp-export
-title: mcp-export
 description: >
   Export SKILL.md frontmatter to MCP (Model Context Protocol) compatible JSON
   schema. Generates tools/list compatible JSON for any MCP-aware agent to

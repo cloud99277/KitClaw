@@ -1,7 +1,5 @@
 ---
 name: task-schema
-title: Task Schema
-type: reference
 ---
 # Task YAML Schema
 

@@ -1,7 +1,5 @@
 ---
-title: "Whiteboard Memory Reference"
-tags: [memory, whiteboard, reference]
-scope: dev
+name: whiteboard-template
 ---
 
 # Whiteboard Memory Reference

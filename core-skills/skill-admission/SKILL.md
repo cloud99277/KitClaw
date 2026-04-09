@@ -1,6 +1,5 @@
 ---
 name: skill-admission
-title: skill-admission
 description: |
   KitClaw skill 收编验收：检查 skill 是否符合 KitClaw 公开仓库的准入标准。
   触发词：收编检查、admission、能不能公开、验收、准入。

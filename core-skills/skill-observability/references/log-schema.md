@@ -1,7 +1,5 @@
 ---
 name: log-schema
-title: Log Schema
-type: reference
 ---
 # Execution Log JSONL Schema
 

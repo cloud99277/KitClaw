@@ -1,6 +1,5 @@
 ---
 name: skill-security-audit
-title: skill-security-audit
 description: >
   Perform static security analysis on AI skill directories — scan for
   hardcoded credentials, undeclared network requests, permission boundary

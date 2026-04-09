@@ -1,6 +1,5 @@
 ---
 name: scheduled-tasks
-title: scheduled-tasks
 description: Manage and run scheduled periodic tasks using cron. Supports two levels - Level 1 for agent-free script execution and Level 2 for agent-assisted intelligent tasks. Use when the user wants to automate periodic tasks, install/remove cron jobs, list scheduled tasks, or run a task manually. NOT for one-off task execution (just run the command), NOT for skill orchestration chains (use agent-orchestrator). 当用户提到"定时""调度""scheduled""cron""自动化""周期性""定期执行"时触发。
 io:
   input:

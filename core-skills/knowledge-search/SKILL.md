@@ -1,6 +1,5 @@
 ---
 name: knowledge-search
-title: knowledge-search
 description: >
   Search the local Markdown knowledge base using hybrid (vector + FTS) retrieval.
   Use when you need to find architecture decisions, past research, configuration

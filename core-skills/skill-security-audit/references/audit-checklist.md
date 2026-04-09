@@ -1,7 +1,5 @@
 ---
 name: audit-checklist
-title: Audit Checklist
-type: reference
 ---
 # Skill 安全审计清单
 

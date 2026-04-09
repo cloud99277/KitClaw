@@ -1,6 +1,5 @@
 ---
 name: continuous-learning-v2
-title: continuous-learning-v2
 description: Automatically learn reusable behaviors from agent sessions and evolve them into skills, commands, or agents. Use when the user wants to enable, tune, or review the newer automatic learning workflow, and prefer this over `continuous-learning` by default.
 ---
 

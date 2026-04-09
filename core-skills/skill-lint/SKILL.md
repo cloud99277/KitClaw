@@ -1,6 +1,5 @@
 ---
 name: skill-lint
-title: skill-lint
 description: Repository-wide lint workflow for skill frontmatter, description routing quality, and high-risk body inconsistencies. Use when the user wants to lint a shared skills repository, enforce skill metadata conventions, or review skills after a bulk refactor or cleanup.
 io:
   input:

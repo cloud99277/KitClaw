@@ -26,8 +26,13 @@ except ImportError:
 __version__ = "1.0.0"
 
 # 校验规则定义
+# SKILL.md 使用 name 作为标识（本地 skill 规范），其他文档使用 title
 REQUIRED_FIELDS = {
     "title": {"severity": "error", "description": "文档标题"},
+}
+SKILL_REQUIRED_FIELDS = {
+    "name": {"severity": "error", "description": "skill 名称"},
+    "description": {"severity": "error", "description": "skill 描述（路由触发依据）"},
 }
 RECOMMENDED_FIELDS = {
     "tags": {"severity": "warning", "description": "标签列表"},
@@ -53,12 +58,26 @@ def _parse_frontmatter_fallback(content: str) -> dict:
 
     metadata: dict[str, object] = {}
     current_key: str | None = None
+    in_multiline = False
+    multiline_value: list[str] = []
 
     for raw_line in m.group(1).splitlines():
         line = raw_line.rstrip()
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
+
+        # 处理多行标量（| 或 >）
+        if in_multiline:
+            if line.startswith("  ") or line.startswith("\t"):
+                multiline_value.append(line[2:] if line.startswith("  ") else line[1:])
+                continue
+            else:
+                # 多行结束
+                assert current_key is not None
+                metadata[current_key] = "\n".join(multiline_value)
+                in_multiline = False
+                multiline_value = []
 
         if stripped.startswith("- "):
             if current_key is None:
@@ -81,6 +100,13 @@ def _parse_frontmatter_fallback(content: str) -> dict:
             raise ValueError(f"空字段名: {line}")
 
         current_key = key
+
+        # 多行标量标记 |
+        if value == "|" or value == ">":
+            in_multiline = True
+            multiline_value = []
+            continue
+
         if not value:
             metadata[key] = []
             continue
@@ -91,6 +117,10 @@ def _parse_frontmatter_fallback(content: str) -> dict:
             continue
 
         metadata[key] = _strip_quotes(value)
+
+    # 处理文件末尾的多行值
+    if in_multiline and current_key is not None:
+        metadata[current_key] = "\n".join(multiline_value)
 
     return metadata
 
@@ -139,7 +169,19 @@ def validate_frontmatter_content(content: str, filepath: str) -> list[dict]:
         return issues
 
     # 检查必填字段
-    for field, rule in REQUIRED_FIELDS.items():
+    # SKILL.md 用 skill 规范，references/ 下的文件只检查 frontmatter 存在，其他文档用通用规范
+    import os
+    fname = os.path.basename(filepath).lower()
+    is_skill_md = fname == "skill.md"
+    is_reference = "/references/" in filepath.replace("\\", "/")
+    if is_skill_md:
+        required = SKILL_REQUIRED_FIELDS
+    elif is_reference:
+        required = {}  # reference 文件只要求 frontmatter 存在
+    else:
+        required = REQUIRED_FIELDS
+
+    for field, rule in required.items():
         if field not in metadata or not metadata[field]:
             issues.append({
                 "file": filepath,

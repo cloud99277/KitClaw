@@ -1,6 +1,5 @@
 ---
 name: memory-manager
-title: memory-manager
 description: Manage cross-agent persistent memory using a three-layer model (Identity/Session/Knowledge). Use when you need to search past decisions, actions, or learnings across conversations, or when you need to persist important information for future sessions. 当用户提到"记忆""memory""whiteboard""历史决策""跨会话""保存决策""查找历史"时触发。Prefer this for cross-session memory persistence; use brain-link or conversation-distiller for single-conversation distillation.
 io:
   input:

@@ -1,7 +1,5 @@
 ---
 name: remediation-guide
-title: Remediation Guide
-type: reference
 ---
 # Skill 安全审计 — 修复指南
 

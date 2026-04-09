@@ -1,7 +1,5 @@
 ---
 name: chain-schema
-title: Chain Schema
-type: reference
 ---
 # 编排链 YAML Schema
 

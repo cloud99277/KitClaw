@@ -1,7 +1,5 @@
 ---
 name: whiteboard-template
-title: Whiteboard Template
-type: reference
 ---
 # Whiteboard Entry Template
 

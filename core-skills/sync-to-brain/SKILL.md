@@ -1,6 +1,5 @@
 ---
 name: sync-to-brain
-title: sync-to-brain
 description: >
   Sync rules and patterns from conversations to the "Brain" knowledge base.
   Extracts rules, categorizes them (language, framework, pattern, projects),

@@ -1,6 +1,5 @@
 ---
 name: conversation-distiller
-title: "Conversation Distiller Skill"
 tags: [memory, knowledge-base, distillation]
 scope: dev
 description: >
