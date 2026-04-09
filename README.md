@@ -29,24 +29,22 @@ It does not create or orchestrate agents. It gives the agents you already use a 
 - 📝 **Conversation-to-Knowledge Distillation**: save the current conversation into L3 and auto-ingest it
 - 📊 **Built-in Observability**: JSONL execution logs and usage reports
 - 🏛️ **Governance**: frontmatter validation, document auditing, and repo hygiene checks
-- 🪶 **Curated Core**: 16 platform-essential skills included, plus a larger ecosystem via [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub)
+- 🪶 **Curated Core**: 17 platform-essential skills included, plus a larger ecosystem via [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub)
 
 ## Project Family
 
-KitClaw is one part of a larger system. The three related repositories have different responsibilities:
+KitClaw is one part of a larger system:
 
 | Repository | Role | What lives there |
 |---|---|---|
-| [`KitClaw`](https://github.com/cloud99277/KitClaw) | Platform runtime | 16 core skills, memory runtime, governance, docs |
+| [`KitClaw`](https://github.com/cloud99277/KitClaw) | Platform runtime | 17 core skills, RAG engine, memory runtime, governance, docs |
 | [`ai-skills-hub`](https://github.com/cloud99277/ai-skills-hub) | Public skill collection | 62 curated skills for coding, research, publishing, automation |
-| `agent-os-knowledge-base` `(private)` | L3 engine upstream | the knowledge indexing/search engine as an independently evolving private upstream |
 
-Recommended mental model:
+KitClaw is the self-contained platform — clone it and you have everything you need (memory, skills, RAG, governance). ai-skills-hub is optional extras, pick what you need.
 
 ```text
-ai-skills-hub (public)             = broad skill ecosystem, pick what you need
-agent-os-knowledge-base (private)  = L3 search/indexing engine upstream
-KitClaw                            = platform runtime + 16 essential skills
+KitClaw                 = platform runtime + 17 core skills + RAG engine
+ai-skills-hub (public)  = 62 extra skills, pick what you need
 ```
 
 ## 🚀 Quick Start
@@ -93,7 +91,7 @@ The three layers are not just storage locations. They are triggered by different
 
 ## Skill Runtime Architecture
 
-KitClaw ships 16 core skills. The broader ecosystem lives in AI Skills Hub.
+KitClaw ships 17 core skills. The broader ecosystem lives in AI Skills Hub.
 
 ```text
 KitClaw/core-skills/       ── install.sh ──> ~/.ai-skills/
@@ -227,7 +225,7 @@ python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --pretty
 
 ## Ecosystem: AI Skills Hub
 
-Beyond the 16 core skills, [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) provides 62 additional curated skills across categories:
+Beyond the 17 core skills, [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) provides 62 additional curated skills across categories:
 
 - **Coding**: code-review, python-patterns, golang-patterns, tdd-workflow, e2e-testing, security-scan
 - **Research**: deep-research, market-research, project-audit, eval-harness

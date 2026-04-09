@@ -31,22 +31,20 @@ KitClaw 是一个面向现有 CLI Agent 的开源基础设施工具箱，适配 
 - 🏛️ **治理能力**：frontmatter 校验、文档审计、仓库卫生检查
 - 🪶 **17 个平台核心 skill + 通过 AI Skills Hub 扩展**：核心开箱即用，生态按需安装
 
-## Project Family：三个关联仓库怎么分工
+## Project Family：两个关联仓库
 
-KitClaw 是整套体系中的一个公开内核：
+KitClaw 是整套体系中的核心平台：
 
 | 仓库 | 角色 | 放什么 |
 |---|---|---|
-| [`KitClaw`](https://github.com/cloud99277/KitClaw) | 平台运行时 | 16 个核心 skill、记忆 runtime、治理、文档 |
+| [`KitClaw`](https://github.com/cloud99277/KitClaw) | 平台运行时 | 17 个核心 skill、RAG 引擎、记忆 runtime、治理、文档 |
 | [`ai-skills-hub`](https://github.com/cloud99277/ai-skills-hub) | 公开 skill 集合 | 62 个精选 skill，涵盖编码、研究、发布、自动化 |
-| `agent-os-knowledge-base`（private） | L3 检索引擎上游 | 知识索引/搜索引擎的私有上游演进仓库 |
 
-推荐这样理解：
+KitClaw 是自包含的平台——克隆下来你就拥有完整的运行时（记忆、skill、RAG、治理）。ai-skills-hub 是可选扩展，按需安装。
 
 ```text
-ai-skills-hub（公开）              = 更大的 skill 生态，按需挑选
-agent-os-knowledge-base（private） = L3 检索引擎上游
-KitClaw                            = 平台运行时 + 16 个必备 skill
+KitClaw                 = 平台运行时 + 17 个核心 skill + RAG 引擎
+ai-skills-hub（公开）    = 62 个额外 skill，按需挑选
 ```
 
 ## 🚀 快速开始
