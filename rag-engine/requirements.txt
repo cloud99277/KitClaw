@@ -1,2 +1,4 @@
 lancedb>=0.20.0
 sentence-transformers>=3.0.0
+python-frontmatter>=1.0.0
+pandas>=2.0.0

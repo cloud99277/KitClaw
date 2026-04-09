@@ -8,7 +8,7 @@
 
 [![Author](https://img.shields.io/badge/Author-Cloud927-blue?style=flat-square)](https://github.com/cloud99277)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Core Skills](https://img.shields.io/badge/Core_Skills-16-blueviolet?style=flat-square)](#-bundled-skills)
+[![Core Skills](https://img.shields.io/badge/Core_Skills-17-blueviolet?style=flat-square)](#-bundled-skills)
 
 </div>
 
@@ -152,7 +152,8 @@ KitClaw/
 │   ├── runtime-doctor/         ← cross-agent runtime validation
 │   ├── runtime-bridge-sync/    ← bridge environment sync
 │   ├── scheduled-tasks/        ← cron job management
-│   └── mcp-export/             ← MCP-compatible tool export
+│   ├── mcp-export/             ← MCP-compatible tool export
+│   └── l3-sync/                ← auto-index L3 on file changes
 ├── rag-engine/
 ├── governance/
 ├── templates/
@@ -163,7 +164,7 @@ KitClaw/
 
 ## 📖 Bundled Skills
 
-KitClaw bundles 16 platform-essential skills, organized by function.
+KitClaw bundles 17 platform-essential skills, organized by function.
 
 ### Memory Layer
 
@@ -195,6 +196,7 @@ KitClaw bundles 16 platform-essential skills, organized by function.
 | runtime-bridge-sync | Sync curated bridge symlinks for cross-environment access |
 | scheduled-tasks | Manage periodic tasks using cron with output delivery |
 | mcp-export | Export SKILL.md frontmatter to MCP-compatible tools/list JSON |
+| l3-sync | Watch knowledge base dirs and auto-trigger incremental RAG indexing |
 
 ### Usage Examples
 
@@ -241,21 +243,34 @@ Install skills from AI Skills Hub selectively — only what you need.
 The RAG engine is optional, but it is what turns Markdown knowledge into semantic L3 retrieval.
 
 ```bash
-# Install the runtime
+# Install the RAG engine
 bash install.sh --with-rag
 
-# Build or update the index
-python3 rag-engine/knowledge_index.py --update ~/knowledge-base --db-path ~/.lancedb/knowledge
+# Configure your knowledge base paths
+cp rag-engine/config.example.json ~/.ai-memory/config.json
+# Edit ~/.ai-memory/config.json → set l3_paths
 
-# Query it directly
+# First-time full index
+python3 rag-engine/knowledge_index.py --full ~/knowledge-base
+
+# Incremental update
+python3 rag-engine/knowledge_index.py --update ~/knowledge-base
+
+# Search
 python3 rag-engine/knowledge_search.py "query" --mode hybrid --top 5
+
+# Auto-index on file changes (optional)
+python3 ~/.ai-skills/l3-sync/scripts/index_watcher.py --watch
 ```
+
+See [L3 Quick Start](docs/l3-quickstart.md) for the complete 30-minute walkthrough.
 
 ## Docs
 
 - [Memory Architecture](docs/memory-architecture.en.md)
 - [Skill Runtime Architecture](docs/skill-runtime-architecture.en.md)
 - [Skill Specification](docs/skill-specification.md)
+- [L3 Quick Start](docs/l3-quickstart.md)
 - [Governance](docs/governance.md)
 
 ## 🛠️ Contributor Setup

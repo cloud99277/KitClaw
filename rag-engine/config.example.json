@@ -1,0 +1,21 @@
+{
+  "embedding": {
+    "mode": "local",
+    "local_model": "BAAI/bge-small-zh-v1.5",
+    "api_model": "text-embedding-3-small",
+    "api_base": "https://api.openai.com/v1"
+  },
+  "index": {
+    "db_path": "~/.lancedb/knowledge",
+    "chunk_size": 512,
+    "chunk_overlap": 64
+  },
+  "search": {
+    "default_mode": "hybrid",
+    "top_k": 5,
+    "rrf_k": 60
+  },
+  "l3_paths": [
+    "~/knowledge-base"
+  ]
+}

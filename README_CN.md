@@ -8,7 +8,7 @@
 
 [![Author](https://img.shields.io/badge/Author-Cloud927-blue?style=flat-square)](https://github.com/cloud99277)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Core Skills](https://img.shields.io/badge/核心技能-16-blueviolet?style=flat-square)](#-内置技能)
+[![Core Skills](https://img.shields.io/badge/核心技能-17-blueviolet?style=flat-square)](#-内置技能)
 
 </div>
 
@@ -29,7 +29,7 @@ KitClaw 是一个面向现有 CLI Agent 的开源基础设施工具箱，适配 
 - 📝 **对话沉淀到知识库**：把刚完成的对话提炼成 L3 文档并自动入库
 - 📊 **内建可观测性**：JSONL 执行日志、使用统计与报告
 - 🏛️ **治理能力**：frontmatter 校验、文档审计、仓库卫生检查
-- 🪶 **16 个平台核心 skill + 通过 AI Skills Hub 扩展**：核心开箱即用，生态按需安装
+- 🪶 **17 个平台核心 skill + 通过 AI Skills Hub 扩展**：核心开箱即用，生态按需安装
 
 ## Project Family：三个关联仓库怎么分工
 
@@ -93,7 +93,7 @@ bash install.sh --with-rag
 
 ## Skill Runtime 架构
 
-KitClaw 内置 16 个核心 skill，更大的生态在 AI Skills Hub。
+KitClaw 内置 17 个核心 skill，更大的生态在 AI Skills Hub。
 
 ```text
 KitClaw/core-skills/       ── install.sh ──> ~/.ai-skills/
@@ -152,7 +152,8 @@ KitClaw/
 │   ├── runtime-doctor/         ← 跨 Agent 运行时验证
 │   ├── runtime-bridge-sync/    ← 跨环境 bridge 同步
 │   ├── scheduled-tasks/        ← cron 定时任务管理
-│   └── mcp-export/             ← MCP 兼容工具导出
+│   ├── mcp-export/             ← MCP 兼容工具导出
+│   └── l3-sync/                ← 知识库变更自动索引
 ├── rag-engine/
 ├── governance/
 ├── templates/
@@ -161,7 +162,7 @@ KitClaw/
 └── examples/
 ```
 
-## 📖 内置技能（16 个）
+## 📖 内置技能（17 个）
 
 ### 记忆层
 
@@ -192,7 +193,8 @@ KitClaw/
 | runtime-doctor | 跨 Agent 共享运行时合约验证 |
 | runtime-bridge-sync | 跨环境 bridge 软链接同步 |
 | scheduled-tasks | cron 定时任务管理，支持输出投递 |
-| mcp-export | SKILL.md 元数据导出为 MCP-compatible tools/list JSON |
+|| mcp-export | SKILL.md 元数据导出为 MCP-compatible tools/list JSON |
+| l3-sync | 监控知识库目录变更，自动触发增量 RAG 索引 |
 
 ### 使用示例
 
@@ -223,7 +225,7 @@ python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --pretty
 
 ## 生态：AI Skills Hub
 
-除 16 个核心 skill 外，[AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) 提供 62 个精选 skill：
+除 17 个核心 skill 外，[AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) 提供 62 个精选 skill：
 
 - **编码**: code-review, python-patterns, golang-patterns, tdd-workflow, e2e-testing, security-scan
 - **研究**: deep-research, market-research, project-audit, eval-harness
@@ -239,21 +241,34 @@ python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --pretty
 RAG 引擎是可选的，但它负责把 Markdown 文档变成可语义检索的 L3。
 
 ```bash
-# 安装运行时
+# 安装 RAG 引擎
 bash install.sh --with-rag
 
-# 构建或更新索引
-python3 rag-engine/knowledge_index.py --update ~/knowledge-base --db-path ~/.lancedb/knowledge
+# 配置知识库路径
+cp rag-engine/config.example.json ~/.ai-memory/config.json
+# 编辑 ~/.ai-memory/config.json → 设置 l3_paths
 
-# 直接查询
+# 首次全量索引
+python3 rag-engine/knowledge_index.py --full ~/knowledge-base
+
+# 增量更新
+python3 rag-engine/knowledge_index.py --update ~/knowledge-base
+
+# 搜索
 python3 rag-engine/knowledge_search.py "查询" --mode hybrid --top 5
+
+# 知识库变更后自动索引（可选）
+python3 ~/.ai-skills/l3-sync/scripts/index_watcher.py --watch
 ```
+
+详见 [L3 快速上手](docs/l3-quickstart.md)。
 
 ## 文档
 
 - [Memory Architecture](docs/memory-architecture.md)
 - [Skill Runtime Architecture](docs/skill-runtime-architecture.md)
 - [Skill Specification](docs/skill-specification.md)
+- [L3 快速上手](docs/l3-quickstart.md)
 - [Governance](docs/governance.md)
 
 ## 🛠️ 贡献者环境
