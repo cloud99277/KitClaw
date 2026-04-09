@@ -22,8 +22,8 @@ SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # 优先级: 环境变量 > 项目 src/rag/ > 同级目录
 if [[ -n "${KNOWLEDGE_SEARCH_PY:-}" ]] && [[ -f "$KNOWLEDGE_SEARCH_PY" ]]; then
     SEARCH_PY="$KNOWLEDGE_SEARCH_PY"
-elif [[ -f "$SKILL_DIR/../../src/rag/knowledge_search.py" ]]; then
-    SEARCH_PY="$(cd "$SKILL_DIR/../../src/rag" && pwd)/knowledge_search.py"
+elif [[ -f "$SKILL_DIR/../../rag-engine/knowledge_search.py" ]]; then
+    SEARCH_PY="$(cd "$SKILL_DIR/../../rag-engine" && pwd)/knowledge_search.py"
 else
     echo '{"schema_version":"1.0","error":"knowledge_search.py not found. Set KNOWLEDGE_SEARCH_PY or install from project root."}' >&2
     exit 1
