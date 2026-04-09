@@ -34,16 +34,16 @@ share one stable capability surface.
 
 | Repository | Position | Main contents | External role |
 | --- | --- | --- | --- |
-| `KitClaw` | public stable distribution | bundled core skills, memory runtime, governance, docs | public installation entry point |
-| `927-ai-skills` `(private)` | larger runtime skills repo | broader production skills, methodology skills, platform skills | private ecosystem layer |
-| `agent-os-knowledge-base` `(private)` | L3 engine upstream | Markdown chunking, indexing, retrieval, RAG evolution | private engine upstream |
+| [`KitClaw`](https://github.com/cloud99277/KitClaw) | Platform runtime | 17 core skills, RAG engine, memory runtime, governance, docs | Public installation entry point |
+| [`ai-skills-hub`](https://github.com/cloud99277/ai-skills-hub) | Public skill collection | 62 curated skills (coding, research, publishing, automation) | Public extension layer |
+| `agent-os-knowledge-base` `(private)` | L3 engine upstream | Markdown chunking, indexing, retrieval, RAG evolution | Private engine upstream |
 
 Useful mental model:
 
 ```text
-KitClaw = public curated core
-927-ai-skills (private) = full runtime catalog
-agent-os-knowledge-base (private) = L3 engine upstream
+KitClaw                  = platform runtime + 17 core skills
+ai-skills-hub (public)   = broader skill ecosystem, pick what you need
+agent-os-knowledge-base  = L3 engine upstream (core code synced to KitClaw/rag-engine/)
 ```
 
 ---
@@ -178,42 +178,31 @@ This chain has four important layers:
 
 ---
 
-## 7. Bundled Core vs Private Ecosystem
+## 7. Bundled Core vs Public Ecosystem
 
-### Bundled Core Skills
+### Bundled Core Skills (17)
 
-KitClaw currently bundles:
+KitClaw currently bundles 17 platform-essential skills:
 
-- `memory-manager`
-- `l2-capture`
-- `conversation-distiller`
-- `knowledge-search`
-- `skill-observability`
-- `mcp-export`
-- `skill-security-audit`
+**Memory**: `memory-manager`, `l2-capture`, `knowledge-search`, `conversation-distiller`, `sync-to-brain`
 
-Together they cover the minimum shared loop plus open-source-ready governance
-and interoperability:
+**Skill Management**: `skill-lint`, `skill-observability`, `skill-security-audit`, `skill-admission`, `skill-stocktake`
+
+**Platform & Automation**: `continuous-learning-v2`, `agent-orchestrator`, `runtime-doctor`, `runtime-bridge-sync`, `scheduled-tasks`, `mcp-export`, `l3-sync`
+
+Together they cover the complete platform runtime:
 
 ```text
-L1/L2/L3 routing
--> L2 writes
--> L3 writes
--> L3 retrieval
--> execution observability
--> MCP metadata export
--> static skill security audit
+Memory: L1/L2/L3 routing -> L2 writes -> L3 writes -> L3 retrieval -> brain injection
+Indexing: RAG engine -> auto-index (l3-sync)
+Governance: lint -> security -> admission -> stocktake -> observability
+Platform: skill chain orchestration -> runtime diagnostics -> bridge sync -> cron -> MCP export
+Learning: learn from repeated patterns (continuous-learning-v2)
 ```
 
-### Private Ecosystem Skills
+### Public Ecosystem Skills
 
-The broader ecosystem can continue to live in the private `927-ai-skills` repo,
-for example:
-
-- `skill-lint`
-- `history-reader`
-- `history-chat`
-- content production, research, and publishing skills
+The broader skill ecosystem lives in the public [`ai-skills-hub`](https://github.com/cloud99277/ai-skills-hub) repository — 62 curated skills for coding, research, publishing, and automation. Install what you need.
 
 ---
 
@@ -236,25 +225,28 @@ should generally meet these conditions:
 
 Once a skill runtime is shared, it needs governance.
 
-KitClaw currently focuses on:
+KitClaw's governance capabilities:
 
 - `governance/hooks/pre-commit`
-  validates critical Markdown frontmatter
+  validates Markdown frontmatter (tiered: SKILL.md uses name+description, others use title)
 
-- `governance/knowledge_auditor.py`
-  audits knowledge document quality
-
-- `skill-observability`
-  records execution logs and shows what is actually used
+- `skill-lint`
+  repository-wide metadata and routing quality checks
 
 - `skill-security-audit`
   runs repository-level static security scanning for shared skills
 
+- `skill-admission`
+  quality gate for core skill inclusion (7 checks: lint, security, no personal deps, agent-agnostic, self-contained, docs complete, clean structure)
+
+- `skill-observability`
+  records execution logs and shows what is actually used
+
+- `skill-stocktake`
+  quality audit workflow with scoring and recommendations
+
 - `mcp-export`
   exports skill metadata for MCP-aware runtimes
-
-In the larger private ecosystem, extra tooling such as `skill-lint` can be
-added as a repository-wide metadata and routing quality gate.
 
 ---
 
@@ -266,6 +258,7 @@ If this is your first time reading KitClaw, this is a good order:
 2. `docs/memory-architecture.en.md`
 3. `docs/skill-runtime-architecture.en.md`
 4. `docs/skill-specification.md`
-5. the `SKILL.md` files of the bundled skills
+5. `docs/l3-quickstart.md` (if you need L3 knowledge base)
+6. the `SKILL.md` files of the bundled skills
 
 That order gives you the system model first and the individual skills after.

@@ -30,16 +30,16 @@ scope: dev
 
 | 仓库 | 定位 | 主要内容 | 对外角色 |
 |------|------|---------|---------|
-| `KitClaw` | 公开稳定发行版 | core skills、记忆 runtime、治理、文档 | 公开安装入口 |
-| `927-ai-skills`（private） | 更大的运行时 skill 仓库 | 更多生产技能、方法论 skill、平台 skill | 私有生态层 |
+| [`KitClaw`](https://github.com/cloud99277/KitClaw) | 平台运行时 | 17 个核心 skill、RAG 引擎、记忆 runtime、治理、文档 | 公开安装入口 |
+| [`ai-skills-hub`](https://github.com/cloud99277/ai-skills-hub) | 公开 skill 集合 | 62 个领域 skill（编码、研究、发布、自动化） | 公开扩展层 |
 | `agent-os-knowledge-base`（private） | L3 引擎上游 | Markdown 切分、索引、检索、RAG 相关演进 | 私有引擎上游 |
 
 简化理解：
 
 ```text
-KitClaw                = public curated core
-927-ai-skills (private) = full runtime catalog
-agent-os-knowledge-base (private) = L3 engine upstream
+KitClaw                 = 平台运行时 + 17 个核心 skill
+ai-skills-hub (公开)     = 更大的 skill 生态，按需安装
+agent-os-knowledge-base  = L3 引擎上游（核心代码已同步到 KitClaw/rag-engine/）
 ```
 
 ---
@@ -175,38 +175,29 @@ Agent 根据描述与触发词匹配 SKILL.md
 
 ## 七、KitClaw Core 与 Ecosystem 的边界
 
-### Core Skills
+### Core Skills（17 个）
 
 KitClaw 当前核心 skill：
 
-- `memory-manager`
-- `l2-capture`
-- `conversation-distiller`
-- `knowledge-search`
-- `skill-observability`
-- `mcp-export`
-- `skill-security-audit`
+**记忆层**：`memory-manager`、`l2-capture`、`knowledge-search`、`conversation-distiller`、`sync-to-brain`
 
-它们覆盖的是最基础的共享能力闭环，以及开源后的治理 / 互操作基础能力：
+**Skill 管理**：`skill-lint`、`skill-observability`、`skill-security-audit`、`skill-admission`、`skill-stocktake`
+
+**平台与自动化**：`continuous-learning-v2`、`agent-orchestrator`、`runtime-doctor`、`runtime-bridge-sync`、`scheduled-tasks`、`mcp-export`、`l3-sync`
+
+它们覆盖的是平台运行所需的完整能力闭环：
 
 ```text
-L1/L2/L3 路由
-→ L2 写入
-→ L3 写入
-→ L3 检索
-→ 执行观测
-→ MCP 元数据导出
-→ Skill 静态安全审计
+记忆：L1/L2/L3 路由 → L2 写入 → L3 写入 → L3 检索 → 规则注入
+索引：RAG 引擎 → 自动索引（l3-sync）
+治理：lint → security → admission → stocktake → observability
+平台：skill chain 编排 → 运行时诊断 → bridge 同步 → 定时任务 → MCP 导出
+学习：从重复模式学习可复用行为（continuous-learning-v2）
 ```
 
 ### Ecosystem Skills
 
-更大的 skill 生态可以继续放在 private 的 `927-ai-skills` 仓库里，例如：
-
-- `skill-lint`
-- `history-reader`
-- `history-chat`
-- 各种内容生产、研究、发布 skill
+更大的 skill 生态在公开的 `ai-skills-hub` 仓库，62 个领域 skill 按需安装。
 
 ---
 
@@ -227,28 +218,28 @@ L1/L2/L3 路由
 
 Skill runtime 一旦共享，就需要治理。
 
-KitClaw 目前的治理重点：
+KitClaw 目前的治理能力：
 
 - `governance/hooks/pre-commit`
-  校验关键 Markdown frontmatter
+  校验 Markdown frontmatter（分层规则：SKILL.md 用 name+description，其他用 title）
 
-- `governance/knowledge_auditor.py`
-  审计知识库文档质量
-
-- `skill-observability`
-  记录执行日志，识别真实使用情况
+- `skill-lint`
+  仓库级 metadata / routing 质量检查
 
 - `skill-security-audit`
   对共享 skill 做仓库级静态安全扫描
 
+- `skill-admission`
+  核心 skill 收编质量关口（7 项检查：lint、安全、无个人依赖、Agent 无关、自包含、文档完整、结构干净）
+
+- `skill-observability`
+  记录执行日志，识别真实使用情况
+
+- `skill-stocktake`
+  质量审计工作流，含评分和建议
+
 - `mcp-export`
   把 skill 元数据导出给 MCP-aware runtime 消费
-
-在更大的生态层，可以进一步引入：
-
-- `skill-lint`
-
-其中 `skill-lint` 更像是 skill 仓库级别的 metadata / routing 质量门。
 
 ---
 
@@ -260,6 +251,7 @@ KitClaw 目前的治理重点：
 2. `docs/memory-architecture.md`
 3. 本文档 `docs/skill-runtime-architecture.md`
 4. `docs/skill-specification.md`
-5. 核心 skill 的 `SKILL.md`
+5. `docs/l3-quickstart.md`（如果需要 L3 知识库）
+6. 核心 skill 的 `SKILL.md`
 
 这样会先理解体系，再看单个 skill 的细节。
