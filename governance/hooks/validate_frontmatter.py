@@ -169,17 +169,22 @@ def validate_frontmatter_content(content: str, filepath: str) -> list[dict]:
         return issues
 
     # 检查必填字段
-    # SKILL.md 用 skill 规范，references/ 下的文件只检查 frontmatter 存在，其他文档用通用规范
+    # SKILL.md: name + description 必填（路由核心），tags/scope 推荐
+    # references/: 只要求 frontmatter 存在
+    # 其他文档: title 必填
     import os
     fname = os.path.basename(filepath).lower()
     is_skill_md = fname == "skill.md"
     is_reference = "/references/" in filepath.replace("\\", "/")
     if is_skill_md:
         required = SKILL_REQUIRED_FIELDS
+        recommended = RECOMMENDED_FIELDS  # tags, scope 仍然推荐
     elif is_reference:
-        required = {}  # reference 文件只要求 frontmatter 存在
+        required = {}
+        recommended = {}  # reference 文件够简洁就行
     else:
         required = REQUIRED_FIELDS
+        recommended = RECOMMENDED_FIELDS
 
     for field, rule in required.items():
         if field not in metadata or not metadata[field]:
@@ -191,7 +196,7 @@ def validate_frontmatter_content(content: str, filepath: str) -> list[dict]:
             })
 
     # 检查推荐字段
-    for field, rule in RECOMMENDED_FIELDS.items():
+    for field, rule in recommended.items():
         if field not in metadata:
             issues.append({
                 "file": filepath,
