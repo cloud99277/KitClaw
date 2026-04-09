@@ -132,8 +132,8 @@ bash skills/knowledge-search/scripts/install.sh
 ## 前置条件
 
 - Python 3.10+
-- LanceDB 索引已创建（运行 `python3 src/rag/knowledge_index.py --full <directory>`）
-- Python 依赖已安装（`pip install -r src/rag/requirements.txt`）
+- LanceDB 索引已创建（运行 `python3 rag-engine/knowledge_index.py --full <directory>`）
+- Python 依赖已安装（`pip install -r rag-engine/requirements.txt`）
 - 首次本地模型加载需能访问 Hugging Face，或提前缓存模型
 
 ## 搜索结果使用协议

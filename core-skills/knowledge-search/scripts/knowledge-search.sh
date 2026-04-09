@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # 查找 knowledge_search.py 的位置
-# 优先级: 环境变量 > 项目 src/rag/ > 同级目录
+# 优先级: 环境变量 > 项目 rag-engine/ > 同级目录
 if [[ -n "${KNOWLEDGE_SEARCH_PY:-}" ]] && [[ -f "$KNOWLEDGE_SEARCH_PY" ]]; then
     SEARCH_PY="$KNOWLEDGE_SEARCH_PY"
 elif [[ -f "$SKILL_DIR/../../rag-engine/knowledge_search.py" ]]; then
