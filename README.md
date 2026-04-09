@@ -8,6 +8,7 @@
 
 [![Author](https://img.shields.io/badge/Author-Cloud927-blue?style=flat-square)](https://github.com/cloud99277)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Core Skills](https://img.shields.io/badge/Core_Skills-16-blueviolet?style=flat-square)](#-bundled-skills)
 
 </div>
 
@@ -28,7 +29,7 @@ It does not create or orchestrate agents. It gives the agents you already use a 
 - 📝 **Conversation-to-Knowledge Distillation**: save the current conversation into L3 and auto-ingest it
 - 📊 **Built-in Observability**: JSONL execution logs and usage reports
 - 🏛️ **Governance**: frontmatter validation, document auditing, and repo hygiene checks
-- 🪶 **Curated Core**: a small public core, with a larger ecosystem living in the shared skills repo
+- 🪶 **Curated Core**: 16 platform-essential skills included, plus a larger ecosystem via [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub)
 
 ## Project Family
 
@@ -36,16 +37,16 @@ KitClaw is one part of a larger system. The three related repositories have diff
 
 | Repository | Role | What lives there |
 |---|---|---|
-| [`KitClaw`](https://github.com/cloud99277/KitClaw) | Public curated runtime | portable core skills, memory runtime, governance, docs |
-| `927-ai-skills` `(private)` | Full runtime skills catalog | broader production skill library used across agents, not publicly published as a repository |
+| [`KitClaw`](https://github.com/cloud99277/KitClaw) | Platform runtime | 16 core skills, memory runtime, governance, docs |
+| [`ai-skills-hub`](https://github.com/cloud99277/ai-skills-hub) | Public skill collection | 62 curated skills for coding, research, publishing, automation |
 | `agent-os-knowledge-base` `(private)` | L3 engine upstream | the knowledge indexing/search engine as an independently evolving private upstream |
 
 Recommended mental model:
 
 ```text
-927-ai-skills (private)        = broad skill ecosystem
-agent-os-knowledge-base (private) = L3 search/indexing engine upstream
-KitClaw              = stable public bundle that combines the core pieces
+ai-skills-hub (public)             = broad skill ecosystem, pick what you need
+agent-os-knowledge-base (private)  = L3 search/indexing engine upstream
+KitClaw                            = platform runtime + 16 essential skills
 ```
 
 ## 🚀 Quick Start
@@ -67,6 +68,7 @@ After installation:
 1. Edit `~/.ai-memory/config.json` and point `l3_paths` to your Markdown knowledge base.
 2. Copy `templates/AGENTS.md` to `~/AGENTS.md` and fill in your profile and routing rules.
 3. Read [docs/memory-architecture.en.md](docs/memory-architecture.en.md) and [docs/skill-runtime-architecture.en.md](docs/skill-runtime-architecture.en.md).
+4. Want more skills? Browse [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) and install what you need.
 
 ## How Three-Layer Memory Works
 
@@ -89,38 +91,33 @@ The three layers are not just storage locations. They are triggered by different
 3. **Markdown vault / Obsidian update → L3 index**
    Use the watcher or run incremental indexing when notes change in your knowledge base.
 
-## OpenClaw + Obsidian Workflow
-
-OpenClaw and Obsidian fit naturally into the KitClaw model, but they play different roles.
-
-```text
-OpenClaw private memory / workspace notes
-    ↓ distill or formalize
-Obsidian / Markdown knowledge vault
-    ↓ frontmatter completion
-KitClaw rag-engine incremental indexing
-    ↓
-knowledge-search / memory-manager
-    ↓
-Claude / Gemini / Codex / OpenClaw all query the same shared L3
-```
-
-Practical boundary:
-
-- **OpenClaw private memory** is for drafts, day-level context, and agent-private working state.
-- **Obsidian / L3** is for stable, shared, human-editable knowledge.
-- **KitClaw** turns those Markdown documents into a cross-agent searchable layer.
-
 ## Skill Runtime Architecture
 
-KitClaw ships a public core, but the runtime model is bigger than this repo.
+KitClaw ships 16 core skills. The broader ecosystem lives in AI Skills Hub.
 
 ```text
-KitClaw/core-skills/      ── install.sh ──> ~/.ai-skills/
-                                        ├─ ~/.claude/skills -> symlink
-                                        ├─ ~/.codex/skills  -> symlink
-                                        ├─ ~/.gemini/skills -> symlink
-                                        └─ ~/.agents/skills -> symlink
+KitClaw/core-skills/       ── install.sh ──> ~/.ai-skills/
+ai-skills-hub/             ── user selects ──> ~/.ai-skills/
+                                         ├─ ~/.claude/skills -> symlink
+                                         ├─ ~/.codex/skills  -> symlink
+                                         ├─ ~/.gemini/skills -> symlink
+                                         └─ ~/.agents/skills -> symlink
+```
+
+### Skill Quality Gate
+
+All skills bundled in KitClaw pass the **skill-admission** quality gate:
+
+- ✅ Lint passed (frontmatter, naming, routing)
+- ✅ Security audit passed (no hardcoded secrets, no dangerous commands)
+- ✅ No personal dependencies (no hardcoded paths or user-specific config)
+- ✅ Agent-agnostic (works across Claude, Codex, Gemini, etc.)
+- ✅ Self-contained (all referenced files exist within the skill)
+- ✅ Clean structure (no README.md or banner files)
+
+```bash
+# Check any skill against admission standards
+python3 ~/.ai-skills/skill-admission/scripts/admission_check.py ~/.ai-skills/my-skill
 ```
 
 At execution time:
@@ -134,26 +131,28 @@ Agent request
   -> stay inside governance constraints
 ```
 
-This is why KitClaw skills are not just prompt snippets. A skill is a portable runtime unit with:
-
-- metadata and routing in `SKILL.md`
-- executable behavior in `scripts/`
-- optional references/templates in `references/`
-- optional tests
-
 ## 📦 Directory Structure
 
 ```text
 KitClaw/
 ├── install.sh
 ├── core-skills/
-│   ├── memory-manager/
-│   ├── l2-capture/
-│   ├── conversation-distiller/
-│   ├── knowledge-search/
-│   ├── skill-observability/
-│   ├── mcp-export/
-│   └── skill-security-audit/
+│   ├── memory-manager/         ← cross-layer search
+│   ├── l2-capture/             ← session conclusion → L2
+│   ├── knowledge-search/       ← L3 hybrid retrieval
+│   ├── conversation-distiller/ ← conversation → L3 note
+│   ├── sync-to-brain/          ← rules → brain injection
+│   ├── skill-lint/             ← metadata + routing quality
+│   ├── skill-observability/    ← execution logging
+│   ├── skill-security-audit/   ← static security checks
+│   ├── skill-admission/        ← quality gate for core inclusion
+│   ├── skill-stocktake/        ← quality audit workflow
+│   ├── continuous-learning-v2/ ← learn from repeated patterns
+│   ├── agent-orchestrator/     ← skill chain validation
+│   ├── runtime-doctor/         ← cross-agent runtime validation
+│   ├── runtime-bridge-sync/    ← bridge environment sync
+│   ├── scheduled-tasks/        ← cron job management
+│   └── mcp-export/             ← MCP-compatible tool export
 ├── rag-engine/
 ├── governance/
 ├── templates/
@@ -164,101 +163,78 @@ KitClaw/
 
 ## 📖 Bundled Skills
 
-KitClaw bundles both runtime memory skills and a small set of governance /
-interoperability skills that are broadly useful when open sourcing a shared
-agent runtime.
+KitClaw bundles 16 platform-essential skills, organized by function.
 
-### Runtime Memory Skills
+### Memory Layer
 
-### memory-manager
+| Skill | Description |
+|---|---|
+| memory-manager | Cross-layer search across L1, L2, L3 from one command |
+| l2-capture | Convert conversation conclusions into structured L2 whiteboard entries |
+| knowledge-search | Hybrid vector + full-text retrieval for L3 knowledge base |
+| conversation-distiller | Turn finished conversations into searchable L3 Markdown notes |
+| sync-to-brain | Sync rules and patterns from conversations into persistent brain injection |
 
-Search across L1, L2, and L3 from one command.
+### Skill Management
+
+| Skill | Description |
+|---|---|
+| skill-lint | Repository-wide lint for skill metadata, naming, and routing quality |
+| skill-observability | Track which skills run, how often, and by which agent |
+| skill-security-audit | Static security analysis against skill directories |
+| skill-admission | Quality gate for skills to be included in core |
+| skill-stocktake | Quality audit workflow with scoring and recommendations |
+
+### Platform & Automation
+
+| Skill | Description |
+|---|---|
+| continuous-learning-v2 | Learn reusable behaviors from repeated patterns (3+ occurrences) |
+| agent-orchestrator | Validate and plan linear skill chains defined in YAML |
+| runtime-doctor | Validate shared runtime contract across agents (WSL, CLI, desktop) |
+| runtime-bridge-sync | Sync curated bridge symlinks for cross-environment access |
+| scheduled-tasks | Manage periodic tasks using cron with output delivery |
+| mcp-export | Export SKILL.md frontmatter to MCP-compatible tools/list JSON |
+
+### Usage Examples
 
 ```bash
+# Search across all memory layers
 python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "keyword"
-python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "keyword" --layer=L2
-```
 
-### l2-capture
-
-Convert raw conversation conclusions into structured L2 entries.
-
-```bash
+# Capture a decision to L2
 python3 ~/.ai-skills/l2-capture/scripts/l2_capture.py \
   --project my-project \
   --from-text "[decision] Use JSON + grep instead of chromadb" \
   --apply
-```
 
-### conversation-distiller
-
-Turn the just-finished conversation into a Markdown note in L3.
-
-```bash
-cat >/tmp/distill.json <<'JSON'
-{
-  "title": "[Dev] Port conflict debugging",
-  "content": "## Background\n...\n\n## Final Fix\n..."
-}
-JSON
-
+# Distill a conversation to L3
 python3 ~/.ai-skills/conversation-distiller/scripts/save_note.py \
-  --json /tmp/distill.json \
-  --print-json
-```
+  --json /tmp/distill.json --print-json
 
-### knowledge-search
-
-Search your L3 knowledge base using hybrid vector + full-text retrieval.
-
-```bash
+# Search L3 knowledge base
 bash ~/.ai-skills/knowledge-search/scripts/knowledge-search.sh "query" --preset coding
-```
 
-### skill-observability
-
-Track which skills run, how often, and by which agent.
-
-```bash
+# Log skill execution
 python3 ~/.ai-skills/skill-observability/scripts/log-execution.py \
   --skill memory-manager --agent codex --status success
-```
 
-### Governance and Interoperability Skills
-
-### mcp-export
-
-Export KitClaw skill metadata as MCP-compatible `tools/list` JSON.
-
-```bash
+# Export MCP-compatible tool list
 python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --pretty
-python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py \
-  --skills-dir ~/.ai-skills \
-  --output /tmp/tools.json
 ```
 
-### skill-security-audit
+## Ecosystem: AI Skills Hub
 
-Run static security checks against one skill or an entire shared skills repo.
+Beyond the 16 core skills, [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) provides 62 additional curated skills across categories:
 
-```bash
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py --all
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
-  ~/.ai-skills/conversation-distiller \
-  --json
-```
+- **Coding**: code-review, python-patterns, golang-patterns, tdd-workflow, e2e-testing, security-scan
+- **Research**: deep-research, market-research, project-audit, eval-harness
+- **Publishing**: article-writing, baoyu-html-deck, baoyu-xhs-images, china-content-compliance
+- **Translation**: translate, 927-translate-skill
+- **Automation**: coding-agent, full-cycle-builder, deployment-patterns
+- **And more**: find-skills, tacit-mining, regex-vs-llm-structured-text, etc.
 
-## Recommended Ecosystem Skills
-
-KitClaw intentionally keeps the public core small. A larger private `927-ai-skills` repo continues to hold the broader ecosystem; KitClaw only publishes the portable subset.
-
-Particularly relevant companion skills:
-
-- `skill-lint`: repository-wide lint for skill metadata and routing quality
-- `history-reader` / `history-chat`: agent-specific chat history adapters
-- domain-specific research, publishing, and automation skills from the private `927-ai-skills` repo
-
-These are good ecosystem skills, but they are not required for the KitClaw core runtime.
+Install skills from AI Skills Hub selectively — only what you need.
 
 ## ⚙️ RAG Engine
 

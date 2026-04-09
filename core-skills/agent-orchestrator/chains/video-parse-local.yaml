@@ -1,0 +1,22 @@
+schema_version: "1.0"
+name: video-parse-local
+description: "对本地视频执行通用解析，输出结构化 Markdown 报告。适合已经下载好的 mp4/mov/webm。"
+
+variables:
+  - name: VIDEO
+    description: 本地视频路径
+    required: true
+  - name: PROMPT
+    description: 视频解析要求，例如结构总结、内容提炼、镜头语言、UI 或 PPT 逆向
+    required: true
+  - name: REPORT
+    description: 输出 Markdown 报告路径
+    required: true
+
+steps:
+  - skill: video-understand
+    input:
+      video: "$VIDEO"
+      prompt: "$PROMPT"
+      report: "$REPORT"
+    output: "$REPORT"

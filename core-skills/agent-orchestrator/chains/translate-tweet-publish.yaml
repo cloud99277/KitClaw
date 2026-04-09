@@ -1,0 +1,25 @@
+schema_version: "1.0"
+name: translate-tweet-publish
+description: 获取推文、翻译、发布到微信
+
+variables:
+  - name: URL
+    description: 推文 URL
+    required: true
+
+steps:
+  - skill: baoyu-danger-x-to-markdown
+    input:
+      url: "$URL"
+    output: content.md
+
+  - skill: translate
+    input:
+      file: content.md
+      to: zh-CN
+      mode: normal
+    output: translation.md
+
+  - skill: baoyu-post-to-wechat
+    input:
+      file: translation.md

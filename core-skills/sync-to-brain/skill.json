@@ -1,0 +1,21 @@
+{
+  "name": "/sync",
+  "description": "将对话中的规则、经验和最佳实践同步到大脑知识库，自动分类并更新 JSON 和 Markdown 文件",
+  "triggers": ["同步", "保存", "更新大脑", "记录规则", "sync", "save to brain", "update brain"],
+  "parameters": {
+    "category": {
+      "type": "string",
+      "enum": ["language", "framework", "pattern", "projects", "all"],
+      "description": "规则分类: language(语言特性), framework(框架), pattern(模式), projects(项目), all(所有)"
+    },
+    "content": {
+      "type": "string",
+      "description": "要同步的具体规则内容，如果为空则从会话历史中自动提取"
+    }
+  },
+  "script": "sync-to-brain.sh",
+  "usage_example": "sync-to-brain --category pattern --content '始终使用绝对路径避免相对路径问题'",
+  "usage_example_zh": "同步 --category language --content '使用绝对路径避免相对路径问题'",
+  "post_message": "已成功将规则同步到大脑知识库",
+  "requires_confirmation": true
+}

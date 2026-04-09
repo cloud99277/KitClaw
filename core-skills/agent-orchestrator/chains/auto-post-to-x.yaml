@@ -1,0 +1,13 @@
+schema_version: "1.0"
+name: auto-post-to-x
+description: "子链 3/3：自动发布到 X。仅当用户明确说「自动发」时使用，否则用户手动发布。"
+
+variables:
+  - name: TOPIC
+    description: 发布包目录名（如 phase4-launch）
+    required: true
+
+steps:
+  - skill: post-to-x
+    input:
+      file: "content/$TOPIC/tweet.txt"

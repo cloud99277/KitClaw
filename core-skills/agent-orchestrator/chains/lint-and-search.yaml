@@ -1,0 +1,18 @@
+schema_version: "1.0"
+name: lint-and-publish
+description: 对 skill 仓库运行 lint 检查，将结果发布到微信（验证 json_data → text 兼容匹配）
+
+variables:
+  - name: SKILLS_DIR
+    description: Skills 仓库根目录路径
+    required: false
+
+steps:
+  - skill: skill-lint
+    input:
+      directory: "$SKILLS_DIR"
+    output: lint-report.json
+
+  - skill: baoyu-post-to-wechat
+    input:
+      file: lint-report.json

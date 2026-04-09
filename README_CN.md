@@ -8,6 +8,7 @@
 
 [![Author](https://img.shields.io/badge/Author-Cloud927-blue?style=flat-square)](https://github.com/cloud99277)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Core Skills](https://img.shields.io/badge/核心技能-16-blueviolet?style=flat-square)](#-内置技能)
 
 </div>
 
@@ -28,24 +29,24 @@ KitClaw 是一个面向现有 CLI Agent 的开源基础设施工具箱，适配 
 - 📝 **对话沉淀到知识库**：把刚完成的对话提炼成 L3 文档并自动入库
 - 📊 **内建可观测性**：JSONL 执行日志、使用统计与报告
 - 🏛️ **治理能力**：frontmatter 校验、文档审计、仓库卫生检查
-- 🪶 **核心精简，生态可扩展**：公开仓库只保留通用核心，更大的 skill 生态放在共享 skills 仓库
+- 🪶 **16 个平台核心 skill + 通过 AI Skills Hub 扩展**：核心开箱即用，生态按需安装
 
 ## Project Family：三个关联仓库怎么分工
 
-KitClaw 只是整套体系中的一个公开内核。三个关联仓库各有职责：
+KitClaw 是整套体系中的一个公开内核：
 
 | 仓库 | 角色 | 放什么 |
 |---|---|---|
-| [`KitClaw`](https://github.com/cloud99277/KitClaw) | 公开稳定发行版 | 核心 skill、记忆 runtime、治理、文档 |
-| `927-ai-skills`（private） | 完整运行时 skill 仓库 | 更大的生产级 skill 目录，供多 Agent 共用，但仓库本身不公开 |
+| [`KitClaw`](https://github.com/cloud99277/KitClaw) | 平台运行时 | 16 个核心 skill、记忆 runtime、治理、文档 |
+| [`ai-skills-hub`](https://github.com/cloud99277/ai-skills-hub) | 公开 skill 集合 | 62 个精选 skill，涵盖编码、研究、发布、自动化 |
 | `agent-os-knowledge-base`（private） | L3 检索引擎上游 | 知识索引/搜索引擎的私有上游演进仓库 |
 
 推荐这样理解：
 
 ```text
-927-ai-skills（private）           = 更大的 skill 生态
+ai-skills-hub（公开）              = 更大的 skill 生态，按需挑选
 agent-os-knowledge-base（private） = L3 检索引擎上游
-KitClaw                  = 面向公开分发的稳定核心组合
+KitClaw                            = 平台运行时 + 16 个必备 skill
 ```
 
 ## 🚀 快速开始
@@ -67,6 +68,7 @@ bash install.sh --with-rag
 1. 编辑 `~/.ai-memory/config.json`，把 `l3_paths` 指向你的 Markdown 知识库
 2. 复制 `templates/AGENTS.md` 到 `~/AGENTS.md`，填写用户画像和路由规则
 3. 阅读 [docs/memory-architecture.md](docs/memory-architecture.md) 和 [docs/skill-runtime-architecture.md](docs/skill-runtime-architecture.md)
+4. 想要更多 skill？去 [AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) 挑选
 
 ## 三层记忆是怎么触发的
 
@@ -89,38 +91,33 @@ bash install.sh --with-rag
 3. **Obsidian / Markdown 文档更新 → L3 索引**
    当知识库文档发生变化时，用 watcher 或增量索引把它们变成全局可检索知识。
 
-## OpenClaw + Obsidian 是怎么联动的
-
-OpenClaw 和 Obsidian 都很适合接到 KitClaw 里，但职责不同。
-
-```text
-OpenClaw 私有记忆 / 工作区草稿
-    ↓ 提炼或正式化
-Obsidian / Markdown 知识库
-    ↓ 自动补 frontmatter
-KitClaw rag-engine 增量索引
-    ↓
-knowledge-search / memory-manager
-    ↓
-Claude / Gemini / Codex / OpenClaw 统一检索共享 L3
-```
-
-边界建议：
-
-- **OpenClaw 私有记忆**：放草稿、当天上下文、Agent 私有工作状态
-- **Obsidian / L3**：放稳定、共享、可人工编辑的知识
-- **KitClaw**：把这些 Markdown 文档转成所有 Agent 都能搜的共享知识层
-
 ## Skill Runtime 架构
 
-KitClaw 的 skill 不是 prompt 文件，而是一套可执行 runtime。
+KitClaw 内置 16 个核心 skill，更大的生态在 AI Skills Hub。
 
 ```text
-KitClaw/core-skills/  ── install.sh ──> ~/.ai-skills/
+KitClaw/core-skills/       ── install.sh ──> ~/.ai-skills/
+ai-skills-hub/             ── 用户选择 ──> ~/.ai-skills/
                                      ├─ ~/.claude/skills -> symlink
                                      ├─ ~/.codex/skills  -> symlink
                                      ├─ ~/.gemini/skills -> symlink
                                      └─ ~/.agents/skills -> symlink
+```
+
+### Skill 质量关口
+
+所有进入 KitClaw 的核心 skill 都通过 **skill-admission** 质量关口：
+
+- ✅ Lint 通过（frontmatter、命名、路由）
+- ✅ 安全审计通过（无硬编码密钥、无危险命令）
+- ✅ 无个人依赖（无硬编码路径或用户专属配置）
+- ✅ Agent 无关（适配 Claude、Codex、Gemini 等所有 Agent）
+- ✅ 自包含（所有引用文件在 skill 内部存在）
+- ✅ 结构干净（无 README.md 或 banner 文件）
+
+```bash
+# 检查任意 skill 是否符合收编标准
+python3 ~/.ai-skills/skill-admission/scripts/admission_check.py ~/.ai-skills/my-skill
 ```
 
 执行链路：
@@ -134,26 +131,28 @@ Agent 请求
   -> 受 governance 规则约束
 ```
 
-一个 skill 的最小单元通常包括：
-
-- `SKILL.md`：路由元数据与使用说明
-- `scripts/`：实际执行逻辑
-- `references/`：可选参考文档/模板
-- `tests/`：可选测试
-
 ## 📦 目录结构
 
 ```text
 KitClaw/
 ├── install.sh
 ├── core-skills/
-│   ├── memory-manager/
-│   ├── l2-capture/
-│   ├── conversation-distiller/
-│   ├── knowledge-search/
-│   ├── skill-observability/
-│   ├── mcp-export/
-│   └── skill-security-audit/
+│   ├── memory-manager/         ← 跨层搜索
+│   ├── l2-capture/             ← 会话结论 → L2
+│   ├── knowledge-search/       ← L3 混合检索
+│   ├── conversation-distiller/ ← 对话 → L3 笔记
+│   ├── sync-to-brain/          ← 规则 → brain 注入
+│   ├── skill-lint/             ← metadata + 路由质量检查
+│   ├── skill-observability/    ← 执行日志
+│   ├── skill-security-audit/   ← 静态安全扫描
+│   ├── skill-admission/        ← 核心收编质量关口
+│   ├── skill-stocktake/        ← 质量审计工作流
+│   ├── continuous-learning-v2/ ← 从重复模式学习
+│   ├── agent-orchestrator/     ← skill chain 验证
+│   ├── runtime-doctor/         ← 跨 Agent 运行时验证
+│   ├── runtime-bridge-sync/    ← 跨环境 bridge 同步
+│   ├── scheduled-tasks/        ← cron 定时任务管理
+│   └── mcp-export/             ← MCP 兼容工具导出
 ├── rag-engine/
 ├── governance/
 ├── templates/
@@ -162,102 +161,78 @@ KitClaw/
 └── examples/
 ```
 
-## 📖 内置 Skill
+## 📖 内置技能（16 个）
 
-KitClaw 不只内置运行时记忆 skill，也内置一小组适合开源共享仓库的治理 /
-互操作 skill。
+### 记忆层
 
-### 运行时记忆 Skill
+| Skill | 说明 |
+|---|---|
+| memory-manager | 一条命令统一搜索 L1、L2、L3 |
+| l2-capture | 把对话结论转换成结构化 L2 白板条目 |
+| knowledge-search | L3 知识库混合向量 + 全文检索 |
+| conversation-distiller | 把对话提炼成可检索的 L3 Markdown 笔记 |
+| sync-to-brain | 从对话中同步规则和模式到持久化 brain 注入 |
 
-### memory-manager
+### Skill 管理
 
-一条命令统一搜索 L1、L2、L3。
+| Skill | 说明 |
+|---|---|
+| skill-lint | 仓库级 skill metadata、命名、路由质量检查 |
+| skill-observability | 记录 skill 执行情况、频率、Agent 统计 |
+| skill-security-audit | skill 目录静态安全分析 |
+| skill-admission | 核心 skill 收编质量关口 |
+| skill-stocktake | 质量审计工作流，含评分和建议 |
+
+### 平台与自动化
+
+| Skill | 说明 |
+|---|---|
+| continuous-learning-v2 | 从重复模式（≥3次）学习可复用行为 |
+| agent-orchestrator | YAML skill chain 验证和规划 |
+| runtime-doctor | 跨 Agent 共享运行时合约验证 |
+| runtime-bridge-sync | 跨环境 bridge 软链接同步 |
+| scheduled-tasks | cron 定时任务管理，支持输出投递 |
+| mcp-export | SKILL.md 元数据导出为 MCP-compatible tools/list JSON |
+
+### 使用示例
 
 ```bash
+# 跨层搜索
 python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "关键词"
-python3 ~/.ai-skills/memory-manager/scripts/memory-search.py "关键词" --layer=L2
-```
 
-### l2-capture
-
-把原始对话结论转换成结构化 L2 条目。
-
-```bash
+# 捕获决策到 L2
 python3 ~/.ai-skills/l2-capture/scripts/l2_capture.py \
   --project my-project \
   --from-text "[decision] 使用 JSON + grep 而非 chromadb" \
   --apply
-```
 
-### conversation-distiller
-
-把刚完成的对话提炼成一份 L3 Markdown 笔记。
-
-```bash
-cat >/tmp/distill.json <<'JSON'
-{
-  "title": "[Dev] 端口冲突排查",
-  "content": "## 背景与起因\n...\n\n## 最终方案\n..."
-}
-JSON
-
+# 提炼对话到 L3
 python3 ~/.ai-skills/conversation-distiller/scripts/save_note.py \
-  --json /tmp/distill.json \
-  --print-json
-```
+  --json /tmp/distill.json --print-json
 
-### knowledge-search
-
-用向量 + 全文混合检索 L3 知识库。
-
-```bash
+# 搜索 L3 知识库
 bash ~/.ai-skills/knowledge-search/scripts/knowledge-search.sh "查询内容" --preset coding
-```
 
-### skill-observability
-
-记录 skill 执行情况，并统计使用情况。
-
-```bash
+# 记录 skill 执行
 python3 ~/.ai-skills/skill-observability/scripts/log-execution.py \
   --skill memory-manager --agent codex --status success
-```
 
-### 治理与互操作 Skill
-
-### mcp-export
-
-把 KitClaw skill 元数据导出成 MCP-compatible `tools/list` JSON。
-
-```bash
+# 导出 MCP 工具列表
 python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --pretty
-python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py \
-  --skills-dir ~/.ai-skills \
-  --output /tmp/tools.json
 ```
 
-### skill-security-audit
+## 生态：AI Skills Hub
 
-对单个 skill 或整个共享 skill 仓库做静态安全检查。
+除 16 个核心 skill 外，[AI Skills Hub](https://github.com/cloud99277/ai-skills-hub) 提供 62 个精选 skill：
 
-```bash
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py --all
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
-  ~/.ai-skills/conversation-distiller \
-  --json
-```
+- **编码**: code-review, python-patterns, golang-patterns, tdd-workflow, e2e-testing, security-scan
+- **研究**: deep-research, market-research, project-audit, eval-harness
+- **发布**: article-writing, baoyu-html-deck, baoyu-xhs-images, china-content-compliance
+- **翻译**: translate, 927-translate-skill
+- **自动化**: coding-agent, full-cycle-builder, deployment-patterns
+- **更多**: find-skills, tacit-mining, regex-vs-llm-structured-text 等
 
-## 值得搭配的生态 Skill
-
-KitClaw 故意把公开核心保持得比较小。更大的 skill 生态目前继续放在 private 的 `927-ai-skills` 仓库里，KitClaw 只公开其中可移植、可共享的子集。
-
-尤其值得搭配的生态 skill：
-
-- `skill-lint`：对共享 skill 仓库做 metadata / routing 级 lint
-- `history-reader` / `history-chat`：各 agent 的历史对话 adapter
-- private 的 `927-ai-skills` 中更丰富的研究、内容生产、发布与自动化 skill
-
-这些 skill 很有价值，但不是 KitClaw 核心 runtime 的硬依赖。
+从 AI Skills Hub 按需安装，不需要的不装。
 
 ## ⚙️ RAG 引擎
 
@@ -303,7 +278,7 @@ bash governance/hooks/install.sh
 - [Gemini CLI](docs/agent-setup/gemini.md)
 - [Codex CLI](docs/agent-setup/codex.md)
 
-## 📄 License
+## 📄 许可证
 
 [MIT](LICENSE)
 

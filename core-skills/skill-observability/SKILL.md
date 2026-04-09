@@ -1,5 +1,6 @@
 ---
 name: skill-observability
+title: skill-observability
 description: Record skill execution logs, generate usage statistics, find unused skills, and produce observability reports. Use when the user wants to track which skills are being used, find unused or high-failure-rate skills, or generate a monthly usage report. NOT for security scanning (use skill-security-audit), NOT for skill format validation (use skill-lint). 当用户提到"可观测""执行日志""使用统计""未使用 skill""月度报告""observability""log execution"时触发。
 io:
   input:

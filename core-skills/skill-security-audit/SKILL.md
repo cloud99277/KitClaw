@@ -1,61 +1,66 @@
 ---
 name: skill-security-audit
-title: "Skill Security Audit Skill"
-tags: [skills, security, governance]
-scope: dev
+title: skill-security-audit
 description: >
-  Perform static security analysis on AI skill directories. Scan for hardcoded
-  credentials, undeclared network requests, basic IO overreach, and risky
-  reverse-API labeling issues. Use when the user wants to audit a shared skill
-  repository or check whether a skill is safe to open source.
+  Perform static security analysis on AI skill directories — scan for
+  hardcoded credentials, undeclared network requests, permission boundary
+  violations, and IO contract inconsistencies. Use when the user asks to
+  "audit skills", "scan for security issues", or "check skill safety".
+  当用户提到"安全审计""扫描凭据""检查skill安全"时触发。
+  Prefer this for skill-level security scanning; use security-review for
+  general code security review, and security-scan for .claude/ config scanning.
 io:
   input:
     - type: directory
-      description: Skill directory or skills root. Defaults to KitClaw core-skills.
-      required: false
+      description: Skill 仓库目录路径（如 ~/.ai-skills/）
   output:
     - type: json_data
-      description: Security audit report
-      path_pattern: "skill-audit-report.json"
+      description: 安全审计报告（含各维度扫描结果）
+      path_pattern: "audit-report.json"
 ---
 
-# Skill Security Audit
+# Skill Security Audit — Skill 安全审计
 
-Run static security checks against one skill or an entire shared skills repo.
+## 定位
 
-## What It Looks For
+针对 `~/.ai-skills/` 中 skill 目录的安全静态分析工具。
 
-- hardcoded credentials or tokens
-- undeclared network requests
-- file writes without matching output declarations
-- reverse or unofficial API wording without `danger-` naming
-- dependency manifests worth manual review
+**与其他安全 skill 的差异**：
 
-## Common Commands
+| Skill | 扫描对象 | 用途 |
+|-------|---------|------|
+| **skill-security-audit** | skill 的 `scripts/` 目录 | 检测凭据泄露、未声明网络请求、权限越界 |
+| `security-review` | 任意代码仓库 | 通用代码安全审查 |
+| `security-scan` | `.claude/` 配置文件 | 配置安全扫描 |
+
+## 使用方式
 
 ```bash
-# Audit the bundled KitClaw core-skills
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py --all
+# 审计单个 skill
+python3 scripts/audit.py ~/.ai-skills/translate
 
-# Audit a single skill
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
-  ~/.ai-skills/conversation-distiller
+# 审计单个 skill，仅凭据扫描
+python3 scripts/audit.py ~/.ai-skills/translate --dimension=credentials
 
-# Audit another shared skill repository
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
-  ~/.ai-skills \
-  --all \
-  --json
+# 审计全仓
+python3 scripts/audit.py ~/.ai-skills --all
 
-# Only run credential checks
-python3 ~/.ai-skills/skill-security-audit/scripts/audit.py \
-  ~/.ai-skills/mcp-export \
-  --dimension credentials
+# 审计全仓，输出 JSON 报告
+python3 scripts/audit.py ~/.ai-skills --all --output=report.json
 ```
 
-## Notes
+## 审计维度
 
-- Default target is this KitClaw repo's `core-skills/`
-- The audit is intentionally static and conservative
-- A `PASS` result does not replace human review
-- The script uses Python stdlib only
+| 维度 | 严重度 | 说明 |
+|------|--------|------|
+| 凭据泄露 | 🔴 Critical | scripts/ 中硬编码的 API key/token/password |
+| 数据外传 | 🔴 Critical | scripts/ 中未声明的外部 HTTP 请求 |
+| 网络越界 | 🟡 High | scripts/ 有网络请求但 SKILL.md 未声明 |
+| IO 越界 | 🟡 High | IO 契约声明与脚本实际行为不符 |
+| Consent 机制 | 🟠 Medium | 使用逆向 API 的 skill 合规性检查 |
+| 供应链 | 🟢 Low | 列出外部依赖文件 |
+
+## 参考文档
+
+- `references/audit-checklist.md` — 详细审计规则和排除策略
+- `references/remediation-guide.md` — 各类问题的修复指南

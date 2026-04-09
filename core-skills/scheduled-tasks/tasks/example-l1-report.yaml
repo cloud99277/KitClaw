@@ -1,0 +1,12 @@
+schema_version: "1.0"
+name: monthly-observability-report
+description: 每月 1 日生成上月 skill 使用报告
+level: 1
+schedule: "0 9 1 * *"
+enabled: true
+command: "python3"
+args: ["~/.ai-skills/skill-observability/scripts/report.py", "--output", "~/.ai-skills/.logs/report-latest.md"]
+working_dir: "~"
+timeout_seconds: 60
+on_failure: log
+max_retries: 0

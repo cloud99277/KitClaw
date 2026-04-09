@@ -1,308 +1,459 @@
 #!/usr/bin/env python3
-"""Export KitClaw SKILL.md frontmatter to MCP-compatible JSON."""
+"""
+export-mcp.py — SKILL.md frontmatter → MCP Tool JSON 导出
 
-from __future__ import annotations
+将 Agent Toolchain 的 SKILL.md frontmatter 导出为符合 MCP 2025-03-26 规范的
+Tool JSON schema。只做导出，不做 MCP Server 运行时。
+
+用法:
+    python3 export-mcp.py                          # 导出全部到 stdout
+    python3 export-mcp.py --output tools.json      # 导出到文件
+    python3 export-mcp.py --skill translate         # 仅导出指定 skill
+    python3 export-mcp.py --stats                  # 仅输出统计
+    python3 export-mcp.py --pretty                 # Pretty-print JSON
+
+零外部依赖：仅使用 Python stdlib。
+"""
 
 import argparse
+import datetime
 import json
+import os
 import re
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any
+
+# ─── Constants ───────────────────────────────────────────────────────────────
 
 MCP_SPEC_VERSION = "2025-03-26"
 SCHEMA_VERSION = "1.0"
-SCRIPT_PATH = Path(__file__).resolve()
-REPO_ROOT = SCRIPT_PATH.parents[3]
-DEFAULT_SKILLS_DIR = REPO_ROOT / "core-skills"
 
+# Default skills directory
+DEFAULT_SKILLS_DIR = os.path.expanduser("~/.ai-skills")
+
+# Type registry path (reserved for future dynamic loading)
+# Current version uses hardcoded IO_TYPE_TO_JSON_SCHEMA below.
+# TODO: Read type-registry.json dynamically when new types are added frequently.
+TYPE_REGISTRY_REL = ".system/io-contracts/type-registry.json"
+
+# Directories to skip when scanning skills
 SKIP_DIRS = {
-    ".git",
-    ".logs",
-    ".system",
-    "__pycache__",
-    ".archive",
-    ".backup",
-    ".deprecated",
+    ".system", ".logs", ".git", "__pycache__",
+    ".archive", ".deprecated", ".backup"
 }
 
-IO_TYPE_TO_JSON_SCHEMA: dict[str, dict[str, Any]] = {
+# IO type → JSON Schema mapping (hardcoded, synced with type-registry.json v1.0)
+# Kept in sync manually. If type-registry.json adds new types, update here.
+IO_TYPE_TO_JSON_SCHEMA = {
     "text": {"type": "string"},
-    "markdown_file": {"type": "string", "description": "Path to a Markdown file"},
-    "json_data": {"type": "string", "description": "JSON file path or inline JSON string"},
-    "directory": {"type": "string", "description": "Directory path"},
+    "markdown_file": {"type": "string", "description": "Path to Markdown file (.md)"},
     "url": {"type": "string", "format": "uri"},
+    "image_file": {"type": "string", "description": "Path to image file (.png/.jpg/.webp)"},
+    "json_data": {"type": "string", "description": "Path to JSON file or inline JSON string"},
+    "html_file": {"type": "string", "description": "Path to HTML file (.html)"},
+    "directory": {"type": "string", "description": "Path to directory"},
 }
 
 
-def parse_frontmatter(skill_md_path: Path) -> dict[str, Any] | None:
+# ─── Frontmatter Parser ─────────────────────────────────────────────────────
+
+def parse_frontmatter(skill_md_path):
+    """Parse SKILL.md frontmatter (YAML subset between --- markers).
+
+    Supports:
+    - key: value (simple)
+    - key: > or key: | (multi-line folded/literal blocks)
+    - io: nested structure (input/output lists with - type/description/required)
+
+    Returns dict with parsed frontmatter fields.
+    """
     try:
-        content = skill_md_path.read_text(encoding="utf-8")
-    except OSError:
+        with open(skill_md_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except (OSError, UnicodeDecodeError):
         return None
 
-    match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+    # Extract frontmatter between --- markers
+    match = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
     if not match:
         return None
 
-    lines = match.group(1).splitlines()
-    result: dict[str, Any] = {}
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        if not line.strip() or line.lstrip().startswith("#"):
-            index += 1
+    fm_text = match.group(1)
+    lines = fm_text.split('\n')
+
+    result = {}
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Skip empty lines and comment lines
+        if not line.strip() or line.strip().startswith('#'):
+            i += 1
             continue
 
-        top_match = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)", line)
+        # Check for top-level key: value
+        top_match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_-]*)\s*:\s*(.*)', line)
         if not top_match:
-            index += 1
+            i += 1
             continue
 
         key = top_match.group(1).strip()
         value = top_match.group(2).strip()
 
-        if key == "io":
-            io_decl, index = parse_io_block(lines, index + 1)
-            result["io"] = io_decl
-            continue
+        if key == 'io':
+            # Parse nested io structure
+            result['io'], i = _parse_io_block(lines, i + 1)
+        elif value in ('>', '|'):
+            # Multi-line block scalar
+            block_style = value
+            i += 1
+            block_lines = []
+            while i < len(lines):
+                if not lines[i].strip():
+                    # Empty line: include for literal, end for folded
+                    if block_style == '|':
+                        block_lines.append('')
+                    i += 1
+                    if block_style == '>':
+                        break
+                    continue
+                # Check indentation — block continues while indented
+                if lines[i][0] in (' ', '\t'):
+                    block_lines.append(lines[i].strip())
+                    i += 1
+                else:
+                    break
 
-        if value in (">", "|"):
-            block_value, index = parse_block_scalar(lines, index + 1, value)
-            result[key] = block_value
-            continue
-
-        result[key] = clean_value(value)
-        index += 1
+            if block_style == '>':
+                # Folded: join with spaces
+                result[key] = ' '.join(block_lines)
+            else:
+                # Literal: join with newlines
+                result[key] = '\n'.join(block_lines)
+        elif value:
+            # Simple key: value
+            # Strip surrounding quotes
+            if (value.startswith('"') and value.endswith('"')) or \
+               (value.startswith("'") and value.endswith("'")):
+                value = value[1:-1]
+            result[key] = value
+            i += 1
+        else:
+            i += 1
 
     return result
 
 
-def parse_block_scalar(lines: list[str], start: int, style: str) -> tuple[str, int]:
-    block_lines: list[str] = []
-    index = start
-    while index < len(lines):
-        line = lines[index]
+def _parse_io_block(lines, start_idx):
+    """Parse the io: block with nested input/output lists.
+
+    Expected structure:
+        io:
+          input:
+            - type: markdown_file
+              description: ...
+              required: false
+            - type: url
+              description: ...
+          output:
+            - type: markdown_file
+              description: ...
+              path_pattern: ...
+
+    Returns (io_dict, next_line_index)
+    """
+    io = {"input": [], "output": []}
+    i = start_idx
+    current_section = None  # 'input' or 'output'
+    current_item = None
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Empty line
         if not line.strip():
-            if style == "|":
-                block_lines.append("")
-                index += 1
-                continue
-            break
-        if line[0] in (" ", "\t"):
-            block_lines.append(line.strip())
-            index += 1
-            continue
-        break
-
-    if style == ">":
-        return " ".join(block_lines), index
-    return "\n".join(block_lines), index
-
-
-def parse_io_block(lines: list[str], start: int) -> tuple[dict[str, list[dict[str, str]]], int]:
-    io: dict[str, list[dict[str, str]]] = {"input": [], "output": []}
-    current_section: str | None = None
-    current_item: dict[str, str] | None = None
-    index = start
-
-    while index < len(lines):
-        line = lines[index]
-        if not line.strip():
-            index += 1
+            i += 1
             continue
 
+        # Calculate indentation
         stripped = line.lstrip()
         indent = len(line) - len(stripped)
-        if indent == 0 and stripped and not stripped.startswith("#"):
+
+        # Non-indented line = end of io block
+        if indent == 0 and stripped and not stripped.startswith('#'):
             break
 
-        section_match = re.match(r"^(input|output)\s*:", stripped)
+        # input: or output: section header (typically 2-space indent)
+        section_match = re.match(r'^(input|output)\s*:', stripped)
         if section_match:
+            # Save pending item from previous section
             if current_item is not None and current_section is not None:
                 io[current_section].append(current_item)
             current_section = section_match.group(1)
             current_item = None
-            index += 1
+            i += 1
             continue
 
-        item_match = re.match(r"^-\s+(\w[\w_-]*)\s*:\s*(.*)", stripped)
+        # List item start: - type: xxx
+        item_match = re.match(r'^-\s+(\w+)\s*:\s*(.*)', stripped)
         if item_match and current_section:
+            # Save previous item
             if current_item is not None:
                 io[current_section].append(current_item)
-            current_item = {item_match.group(1): clean_value(item_match.group(2))}
-            index += 1
+            current_item = {item_match.group(1): _clean_value(item_match.group(2))}
+            i += 1
             continue
 
-        cont_match = re.match(r"^(\w[\w_-]*)\s*:\s*(.*)", stripped)
+        # Continuation of current item: key: value (indented, no -)
+        cont_match = re.match(r'^(\w[\w_-]*)\s*:\s*(.*)', stripped)
         if cont_match and current_item is not None:
-            current_item[cont_match.group(1)] = clean_value(cont_match.group(2))
-            index += 1
+            k = cont_match.group(1)
+            v = _clean_value(cont_match.group(2))
+            current_item[k] = v
+            i += 1
             continue
 
-        index += 1
+        i += 1
 
+    # Save last item
     if current_item is not None and current_section is not None:
         io[current_section].append(current_item)
 
-    return io, index
+    return io, i
 
 
-def clean_value(value: str) -> str:
-    cleaned = value.strip()
-    if not cleaned:
-        return cleaned
-    if (cleaned.startswith('"') and cleaned.endswith('"')) or (
-        cleaned.startswith("'") and cleaned.endswith("'")
-    ):
-        return cleaned[1:-1]
-    return cleaned
+def _clean_value(v):
+    """Strip quotes and whitespace from a parsed value."""
+    v = v.strip()
+    if not v:
+        return v
+    if (v.startswith('"') and v.endswith('"')) or \
+       (v.startswith("'") and v.endswith("'")):
+        v = v[1:-1]
+    return v
 
 
-def discover_skills(
-    skills_dir: Path,
-    filter_names: set[str] | None = None,
-) -> list[tuple[Path, dict[str, Any]]]:
-    if not skills_dir.is_dir():
-        print(f"Error: skills directory not found: {skills_dir}", file=sys.stderr)
-        return []
+# ─── MCP Tool Generation ────────────────────────────────────────────────────
 
-    skills: list[tuple[Path, dict[str, Any]]] = []
-    for entry in sorted(skills_dir.iterdir(), key=lambda item: item.name):
-        if not entry.is_dir() or entry.name.startswith(".") or entry.name in SKIP_DIRS:
-            continue
-        skill_md = entry / "SKILL.md"
-        if not skill_md.exists():
-            continue
-        frontmatter = parse_frontmatter(skill_md)
-        if frontmatter is None or "name" not in frontmatter:
-            continue
-        if filter_names and frontmatter["name"] not in filter_names:
-            continue
-        skills.append((entry, frontmatter))
-    return skills
+def skill_to_mcp_tool(skill_dir, frontmatter):
+    """Convert a parsed SKILL.md frontmatter to an MCP Tool JSON object."""
+    name = frontmatter.get("name", os.path.basename(skill_dir))
+    description = frontmatter.get("description", "")
+
+    # Build inputSchema from io declarations
+    input_schema = _build_input_schema(frontmatter.get("io"))
+
+    # Build annotations
+    annotations = _build_annotations(name, skill_dir)
+
+    tool = {
+        "name": name,
+        "description": description,
+        "inputSchema": input_schema,
+        "annotations": annotations,
+    }
+
+    return tool
 
 
-def build_input_schema(io_decl: dict[str, list[dict[str, str]]] | None) -> dict[str, Any]:
+def _build_input_schema(io_decl):
+    """Build MCP inputSchema from io declaration.
+
+    If io has input declarations, map each to a JSON Schema property.
+    If no io, return minimal {"type": "object"}.
+    """
     if not io_decl or not io_decl.get("input"):
         return {"type": "object"}
 
-    properties: dict[str, Any] = {}
-    required: list[str] = []
-    for index, item in enumerate(io_decl["input"]):
-        io_type = item.get("type", "text")
-        description = item.get("description", "")
-        prop_name = f"input_{index}_{io_type}"
+    properties = {}
+    required = []
+
+    for idx, inp in enumerate(io_decl["input"]):
+        io_type = inp.get("type", "text")
+        desc = inp.get("description", "")
+
+        # Generate property name: input_{index}_{type}
+        prop_name = f"input_{idx}_{io_type}"
+
+        # Map IO type to JSON Schema
         schema = dict(IO_TYPE_TO_JSON_SCHEMA.get(io_type, {"type": "string"}))
-        if description:
-            schema["description"] = description
+
+        # Override description with io-specific description if present
+        if desc:
+            schema["description"] = desc
+
         properties[prop_name] = schema
-        is_required = item.get("required", "true").lower()
-        if is_required not in {"false", "no", "0"}:
+
+        # Determine required status (default: true)
+        is_required = inp.get("required", "true")
+        if str(is_required).lower() not in ("false", "no", "0"):
             required.append(prop_name)
 
-    result: dict[str, Any] = {"type": "object", "properties": properties}
+    result = {"type": "object", "properties": properties}
     if required:
         result["required"] = required
+
     return result
 
 
-def build_annotations(name: str, skill_dir: Path) -> dict[str, Any]:
+def _build_annotations(name, skill_dir):
+    """Build MCP tool annotations based on skill metadata."""
+    # Title: kebab-case → Title Case
+    title = name.replace("-", " ").title()
+
+    # readOnlyHint: has scripts/ → not read-only
+    scripts_dir = os.path.join(skill_dir, "scripts")
+    has_scripts = os.path.isdir(scripts_dir)
+
     return {
-        "title": name.replace("-", " ").title(),
-        "readOnlyHint": not (skill_dir / "scripts").is_dir(),
+        "title": title,
+        "readOnlyHint": not has_scripts,
         "destructiveHint": False,
         "idempotentHint": False,
         "openWorldHint": False,
     }
 
 
-def skill_to_tool(skill_dir: Path, frontmatter: dict[str, Any]) -> dict[str, Any]:
-    name = str(frontmatter.get("name", skill_dir.name))
-    description = str(frontmatter.get("description", "")).strip()
-    return {
-        "name": name,
-        "description": description,
-        "inputSchema": build_input_schema(frontmatter.get("io")),
-        "annotations": build_annotations(name, skill_dir),
-    }
+# ─── Skill Discovery ────────────────────────────────────────────────────────
+
+def discover_skills(skills_dir, filter_names=None):
+    """Discover all skills with valid SKILL.md in the skills directory.
+
+    Args:
+        skills_dir: Root skills directory (e.g. ~/.ai-skills/)
+        filter_names: Optional set of skill names to include (None = all)
+
+    Returns:
+        List of (skill_dir_path, frontmatter_dict) tuples.
+    """
+    results = []
+
+    if not os.path.isdir(skills_dir):
+        print(f"Error: Skills directory not found: {skills_dir}", file=sys.stderr)
+        return results
+
+    for entry in sorted(os.listdir(skills_dir)):
+        # Skip hidden dirs and known non-skill dirs
+        if entry.startswith('.') or entry in SKIP_DIRS:
+            continue
+
+        skill_dir = os.path.join(skills_dir, entry)
+        if not os.path.isdir(skill_dir):
+            continue
+
+        skill_md = os.path.join(skill_dir, "SKILL.md")
+        if not os.path.isfile(skill_md):
+            continue
+
+        # Parse frontmatter
+        fm = parse_frontmatter(skill_md)
+        if fm is None or "name" not in fm:
+            continue
+
+        # Apply filter
+        if filter_names and fm["name"] not in filter_names:
+            continue
+
+        results.append((skill_dir, fm))
+
+    return results
 
 
-def parse_args() -> argparse.Namespace:
+# ─── Main ────────────────────────────────────────────────────────────────────
+
+def main():
     parser = argparse.ArgumentParser(
-        description="Export SKILL.md frontmatter to MCP-compatible tool JSON"
+        description="Export SKILL.md frontmatter to MCP Tool JSON schema"
     )
     parser.add_argument(
-        "--skills-dir",
-        default=str(DEFAULT_SKILLS_DIR),
-        help=f"Skills directory to scan (default: {DEFAULT_SKILLS_DIR})",
+        "--skills-dir", default=DEFAULT_SKILLS_DIR,
+        help=f"Skills directory (default: {DEFAULT_SKILLS_DIR})"
     )
-    parser.add_argument("--output", "-o", help="Write JSON output to a file")
     parser.add_argument(
-        "--skill",
-        action="append",
-        default=None,
-        help="Export only the specified skill name. Can be repeated.",
+        "--output", "-o", default=None,
+        help="Output file path (default: stdout)"
     )
-    parser.add_argument("--stats", action="store_true", help="Print summary stats only")
-    parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
     parser.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {SCHEMA_VERSION} (MCP {MCP_SPEC_VERSION})",
+        "--skill", action="append", default=None,
+        help="Export only specified skill(s) (can repeat)"
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--stats", action="store_true",
+        help="Show statistics only, don't output JSON"
+    )
+    parser.add_argument(
+        "--pretty", action="store_true",
+        help="Pretty-print JSON output"
+    )
+    args = parser.parse_args()
 
-
-def main() -> int:
-    args = parse_args()
-    skills_dir = Path(args.skills_dir).expanduser().resolve()
+    skills_dir = os.path.expanduser(args.skills_dir)
     filter_names = set(args.skill) if args.skill else None
+
+    # Discover skills
     skills = discover_skills(skills_dir, filter_names)
+
     if not skills:
         print("No skills found.", file=sys.stderr)
-        return 1
+        sys.exit(1)
 
-    with_io = 0
-    tools: list[dict[str, Any]] = []
-    for skill_dir, frontmatter in skills:
-        if frontmatter.get("io"):
-            with_io += 1
-        tools.append(skill_to_tool(skill_dir, frontmatter))
+    # Convert to MCP tools
+    tools = []
+    with_io_count = 0
 
+    for skill_dir, fm in skills:
+        tool = skill_to_mcp_tool(skill_dir, fm)
+        tools.append(tool)
+        if fm.get("io"):
+            with_io_count += 1
+
+    # Stats mode
     if args.stats:
         print(f"Skills directory: {skills_dir}")
         print(f"Total skills discovered: {len(skills)}")
-        print(f"With IO declarations: {with_io}")
-        print(f"Without IO declarations: {len(skills) - with_io}")
+        print(f"With IO declarations: {with_io_count}")
+        print(f"Without IO declarations: {len(skills) - with_io_count}")
         print(f"Tools exported: {len(tools)}")
-        return 0
+        print()
+        print("Skills with IO declarations:")
+        for skill_dir, fm in skills:
+            if fm.get("io"):
+                io = fm["io"]
+                n_in = len(io.get("input", []))
+                n_out = len(io.get("output", []))
+                print(f"  {fm['name']}: {n_in} input(s), {n_out} output(s)")
+        return
 
-    document = {
+    # Build output document
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    output = {
         "schema_version": SCHEMA_VERSION,
         "mcp_spec_version": MCP_SPEC_VERSION,
-        "exported_at": datetime.now(timezone.utc).isoformat(),
-        "skills_dir": str(skills_dir),
+        "exported_at": now,
+        "skills_dir": skills_dir,
         "stats": {
             "total_skills": len(skills),
-            "with_io": with_io,
+            "with_io": with_io_count,
             "exported": len(tools),
         },
         "tools": tools,
     }
 
-    payload = json.dumps(document, ensure_ascii=False, indent=2 if args.pretty else None)
-    if args.output:
-        output_path = Path(args.output).expanduser()
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(payload + "\n", encoding="utf-8")
-        print(f"Exported {len(tools)} tools to {output_path}", file=sys.stderr)
-        return 0
+    # Serialize
+    indent = 2 if args.pretty else None
+    json_str = json.dumps(output, ensure_ascii=False, indent=indent)
 
-    print(payload)
-    return 0
+    # Output
+    if args.output:
+        out_path = os.path.expanduser(args.output)
+        os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(json_str)
+            f.write("\n")
+        print(f"Exported {len(tools)} tools to {out_path}", file=sys.stderr)
+    else:
+        print(json_str)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

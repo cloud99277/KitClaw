@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Lint"
+  short_description: "Lint skill frontmatter and routing quality"
+  default_prompt: "Use $skill-lint to lint the current skills repository and summarize structural errors and routing warnings."

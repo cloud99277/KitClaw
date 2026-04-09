@@ -1,5 +1,6 @@
 ---
 name: memory-manager
+title: memory-manager
 description: Manage cross-agent persistent memory using a three-layer model (Identity/Session/Knowledge). Use when you need to search past decisions, actions, or learnings across conversations, or when you need to persist important information for future sessions. 当用户提到"记忆""memory""whiteboard""历史决策""跨会话""保存决策""查找历史"时触发。Prefer this for cross-session memory persistence; use brain-link or conversation-distiller for single-conversation distillation.
 io:
   input:
@@ -56,7 +57,7 @@ python3 ~/.ai-skills/memory-manager/scripts/memory-update.py --list
 如果你要更方便地把当前任务/对话提炼成 1-3 条 L2 条目，优先用：
 
 ```bash
-python3 ~/.ai-skills/l2-capture/scripts/l2_capture.py \
+python3 ../l2-capture/scripts/l2_capture.py \
   --project agent-toolchain \
   --from-text "[decision] 共享稳定知识统一落到 20_Knowledge_Base" \
   --apply

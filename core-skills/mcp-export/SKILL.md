@@ -1,75 +1,72 @@
 ---
 name: mcp-export
-title: "MCP Export Skill"
-tags: [skills, mcp, interoperability]
-scope: dev
+title: mcp-export
 description: >
   Export SKILL.md frontmatter to MCP (Model Context Protocol) compatible JSON
-  schema. Generates tools/list style JSON so MCP-aware runtimes can discover
-  and route KitClaw skills. Use when the user asks for MCP export, tools/list,
-  MCP schema, or skill metadata interoperability.
+  schema. Generates tools/list compatible JSON for any MCP-aware agent to
+  discover and invoke skills. Use when user mentions "MCP", "Model Context
+  Protocol", "导出 MCP", "MCP schema", "tools/list export".
+  当用户提到"MCP导出""MCP兼容""导出工具列表""MCP JSON"时触发。
 io:
   input:
     - type: directory
-      description: Skills root to scan. Defaults to KitClaw core-skills.
-      required: false
+      description: Skill 仓库目录（默认 ~/.ai-skills/）
   output:
     - type: json_data
-      description: MCP-compatible tool schema export
+      description: MCP 兼容的 Tool JSON Schema（tools/list 格式）
       path_pattern: "mcp-tools.json"
 ---
 
-# MCP Export
+# MCP Export — SKILL.md → MCP Tool JSON 导出
 
-Export `SKILL.md` frontmatter into MCP-compatible `tools/list` JSON.
+## 用途
 
-## Why It Exists
+将 Agent Toolchain 的 SKILL.md frontmatter 导出为符合 MCP 2025-03-26 规范的 Tool JSON schema。
 
-KitClaw treats each skill as a reusable runtime unit. `mcp-export` makes that
-metadata portable so other MCP-aware agents or runtimes can discover the same
-skills without re-authoring tool schemas by hand.
+> **只做导出，不做 MCP Server 运行时。** 导出的 JSON 可被任何 MCP 兼容的 Agent/Client 消费。
 
-## Common Commands
+## 使用方式
 
 ```bash
-# Export KitClaw core-skills to stdout
+# 导出所有 skill 到 stdout（JSON 格式）
+python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py
+
+# 导出到文件
+python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --output tools.json
+
+# 仅导出指定 skill
+python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --skill translate --skill deep-research
+
+# 查看统计信息
+python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --stats
+
+# Pretty-print 格式化输出
 python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py --pretty
-
-# Export to a file
-python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py \
-  --output /tmp/mcp-tools.json --pretty
-
-# Export a subset
-python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py \
-  --skill memory-manager \
-  --skill knowledge-search
-
-# Export another shared skills repo instead of KitClaw core-skills
-python3 ~/.ai-skills/mcp-export/scripts/export-mcp.py \
-  --skills-dir ~/.ai-skills \
-  --stats
 ```
 
-## Output
+## 输出格式
 
-The script emits:
+```json
+{
+  "schema_version": "1.0",
+  "mcp_spec_version": "2025-03-26",
+  "exported_at": "2026-03-14T19:00:00+08:00",
+  "tools": [
+    {
+      "name": "translate",
+      "description": "...",
+      "inputSchema": { "type": "object", "properties": {...}, "required": [...] },
+      "annotations": { "readOnlyHint": false, ... }
+    }
+  ]
+}
+```
 
-- `schema_version`
-- `mcp_spec_version`
-- `exported_at`
-- `skills_dir`
-- `stats`
-- `tools`
+## 映射规则
 
-Each exported tool includes:
+详见 `references/mcp-schema-mapping.md`。
 
-- `name`
-- `description`
-- `inputSchema`
-- `annotations`
+## 依赖
 
-## Notes
-
-- Default scan root is this KitClaw repo's `core-skills/`
-- Output is pure JSON; this skill does not run an MCP server
-- The script uses Python stdlib only
+- Python 3（stdlib only，零外部依赖）
+- `~/.ai-skills/.system/io-contracts/type-registry.json`（IO 类型映射）

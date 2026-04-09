@@ -1,3 +1,8 @@
+---
+name: log-schema
+title: Log Schema
+type: reference
+---
 # Execution Log JSONL Schema
 
 > **版本**：1.0

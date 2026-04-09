@@ -1,5 +1,6 @@
 ---
 name: l2-capture
+title: l2-capture
 description: Capture concise L2 Whiteboard memory entries on top of memory-manager. Use when the user says "记到L2", "写入白板", "提炼成 L2 记忆", "记下这个决策", or wants 1-3 shared decision/action/learning entries extracted from the current task or conversation. Prefer this over calling memory-update.py directly for normal L2 writes.
 io:
   input:

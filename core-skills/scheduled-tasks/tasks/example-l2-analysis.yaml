@@ -1,0 +1,11 @@
+schema_version: "1.0"
+name: weekly-skill-health-check
+description: 每周日生成 skill 健康度分析报告（需要 LLM 总结）
+level: 2
+schedule: "0 10 * * 0"
+enabled: false
+agent: gemini
+prompt: "请运行 skill-observability 的 report.py 和 find-unused.py，然后总结出本周 skill 使用趋势和建议。将报告保存到 ~/.ai-skills/.logs/weekly-health.md"
+timeout_seconds: 600
+on_failure: log
+max_retries: 0

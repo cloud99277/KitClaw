@@ -1,0 +1,27 @@
+schema_version: "1.0"
+name: video-parse-from-url
+description: "从远程视频链接下载素材，再生成通用视频解析报告。使用 Python 脚本作为下载后端，确保高兼容性。"
+
+variables:
+  - name: URL
+    description: 视频页面链接或平台分享链接
+    required: true
+  - name: WORKDIR
+    description: 工作目录，用于保存下载文件和分析报告
+    required: true
+  - name: PROMPT
+    description: 视频解析要求，例如场景拆解、旁白摘要、镜头节奏、视觉风格、结构提炼
+    required: true
+
+steps:
+  - skill: bash
+    input:
+      command: "python3 douyin_downloader.py -l \"$URL\" -a download -o \"$WORKDIR\""
+    output: "$WORKDIR/source-video.mp4"
+
+  - skill: video-understand
+    input:
+      video: "$WORKDIR/source-video.mp4"
+      prompt: "$PROMPT"
+      report: "$WORKDIR/video-analysis.md"
+    output: "$WORKDIR/video-analysis.md"

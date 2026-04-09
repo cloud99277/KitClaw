@@ -23,7 +23,7 @@ SCHEMA_VERSION = "1.0"
 DEFAULT_LOG_DIR = os.path.expanduser("~/.ai-skills/.logs")
 DEFAULT_LOG_FILE = os.path.join(DEFAULT_LOG_DIR, "executions.jsonl")
 VALID_STATUSES = {"success", "failure", "partial"}
-VALID_AGENTS = {"gemini", "claude", "codex", "openclaw", "unknown"}
+VALID_AGENTS = {"gemini", "claude", "codex", "hermes", "openclaw", "unknown"}
 
 
 def ensure_log_dir(log_file):

@@ -1,0 +1,34 @@
+schema_version: "1.0"
+name: finalize-package
+description: "子链 2/3：根据选定标题改文章 → 生成封面和插图 → 融合发布包 → 审查（循环直到通过）。"
+
+variables:
+  - name: TOPIC
+    description: 发布包目录名（如 phase4-launch）
+    required: true
+  - name: TITLE
+    description: 用户选定的标题
+    required: true
+
+steps:
+  - skill: content-for-x
+    input:
+      source: "content/$TOPIC"
+      title: "$TITLE"
+      mode: "finalize"
+
+  - skill: baoyu-cover-image
+    input:
+      source: "content/$TOPIC/x-article-package.md"
+      aspect: "5:2"
+      output: "content/$TOPIC/imgs/cover.png"
+
+  - skill: baoyu-image-gen
+    input:
+      source: "content/$TOPIC/image-prompts.md"
+      output_dir: "content/$TOPIC/imgs"
+
+  - skill: content-engine
+    input:
+      source: "content/$TOPIC"
+      platform: x

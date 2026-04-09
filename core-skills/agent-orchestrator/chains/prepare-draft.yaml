@@ -1,0 +1,24 @@
+schema_version: "1.0"
+name: prepare-draft
+description: "子链 1/3：从源素材生成文章初稿 + 4 个标题方案。执行完毕后暂停，等用户选择标题。"
+
+variables:
+  - name: SOURCE
+    description: 源素材路径（文档/目录）
+    required: true
+  - name: TOPIC
+    description: 发布包目录名（如 phase4-launch）
+    required: true
+
+steps:
+  - skill: content-for-x
+    input:
+      source: "$SOURCE"
+      output_dir: "content/$TOPIC"
+      mode: "draft"
+
+  - skill: content-engine
+    input:
+      source: "content/$TOPIC"
+      task: "generate-titles"
+      count: "4"

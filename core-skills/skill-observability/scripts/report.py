@@ -107,8 +107,8 @@ def generate_report(entries, error_lines, since=None, until=None):
 
     lines.append("## 总览")
     lines.append("")
-    lines.append("| 指标 | 值 |")
-    lines.append("|------|----|")
+    lines.append(f"| 指标 | 值 |")
+    lines.append(f"|------|----|")
     lines.append(f"| 总执行次数 | {total} |")
     lines.append(f"| 成功次数 | {success_count} ({success_rate:.1f}%) |")
     lines.append(f"| 失败次数 | {failure_count} |")
@@ -184,8 +184,8 @@ def generate_report(entries, error_lines, since=None, until=None):
 
         lines.append("## 耗时统计")
         lines.append("")
-        lines.append("| 指标 | 值 |")
-        lines.append("|------|----|")
+        lines.append(f"| 指标 | 值 |")
+        lines.append(f"|------|----|")
         lines.append(f"| 有耗时记录的执行数 | {len(durations)} |")
         lines.append(f"| 平均耗时 | {avg_duration:.1f}s |")
         lines.append(f"| 最长耗时 | {max_duration:.1f}s |")

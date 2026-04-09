@@ -32,9 +32,12 @@
 
 ## Skills System
 
-All CLI tools (Claude Code, Codex, Gemini, Antigravity) share a unified skill repository:
+All CLI tools (Claude Code, Codex, Gemini, Hermes Agent, Antigravity) share a unified skill repository:
 
 - **CLI Agent Skill Directory**: `~/.ai-skills/`
+- **Symlinks**: `~/.claude/skills`, `~/.codex/skills`, `~/.gemini/skills`, `~/.agents/skills` all point to `~/.ai-skills/`
+- **Hermes Agent**: Load via `skills.external_dirs: [/home/yangyy/.ai-skills]` in `~/.hermes/config.yaml` (Hermes uses bundled + external skills)
+- **OpenClaw Skill Directory**: `~/.openclaw/skills/` (independent repo, different interface)
 - **Unified Observability Log**: `~/.ai-skills/.logs/executions.jsonl` (all agents write to the same file)
 
 ### Usage Rules
@@ -50,7 +53,7 @@ After **substantively executing any skill**, automatically call `log-execution.p
 
 ```bash
 python3 ~/.ai-skills/skill-observability/scripts/log-execution.py \
-  --skill <skill-name> --agent <gemini|claude|codex|unknown> --status <success|failure|partial> \
+  --skill <skill-name> --agent <gemini|claude|codex|hermes|unknown> --status <success|failure|partial> \
   [--notes "failure reason"]
 ```
 
@@ -80,3 +83,11 @@ python3 ~/.ai-skills/l2-capture/scripts/l2_capture.py \
 ```
 
 If the content is a full document or long-term knowledge, don't write to L2 — use L3 instead.
+
+## Agent Operations Guidelines (Kitclaw L1 Core)
+
+- **动作前置 (Action-First)**: Lead with the answer or action, not the reasoning. Skip filler words, preamble, and unnecessary transitions. Do not restate the user's instructions.
+- **爆炸半径控制 (Careful Actions)**: Treat destructive operations (e.g., `rm -rf`, force-pushing, overwriting uncommitted changes) with extreme caution. Investigate root causes (e.g., lock files, merge conflicts) rather than bypassing safety checks. Ask for confirmation before risky actions.
+- **代码极致克制 (No Gold-Plating)**: Do not add features, refactor code, or make improvements beyond what was asked. Do not add error handling for impossible scenarios.
+- **不碰未读代码 (Read First)**: In general, do not propose changes to code you haven't read. If asked to modify a file, read it first.
+- **自测闭环 (Verify Before Completion)**: Before reporting a coding task complete, verify it actually works. Run tests, check outputs, and do not falsely claim success if errors persist.
