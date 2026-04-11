@@ -1,5 +1,10 @@
 [English](README.md) | [简体中文](README_CN.md)
 
+> [!WARNING]
+> **🔴 已废弃 (DEPRECATED): KitClaw 已全面升级为 Z-Core。**
+> V2 版本的重构和重写已全部完成，所有的运行时底座与技能框架已经合并升级到了 **[Z-Core](https://github.com/cloud99277/Z-Core)** 项目中。请迁移到 Z-Core 以获取大一统 CLI、零依赖中间件、内置 RAG 以及全套 MCP 管理能力。当前仓库停止维护并正式归档。
+> 详情请参阅 [迁移指南](https://github.com/cloud99277/Z-Core/blob/main/docs/migration-from-kitclaw.md)。
+
 <div align="center">
 
 # 🐾 KitClaw

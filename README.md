@@ -1,5 +1,10 @@
 [English](README.md) | [简体中文](README_CN.md)
 
+> [!WARNING]
+> **🔴 DEPRECATED: KitClaw has been superseded by Z-Core.**
+> The V2 iteration has been successfully completed and the entire runtime + skill framework has been unified into **[Z-Core](https://github.com/cloud99277/Z-Core)**. Please migrate to Z-Core for an all-in-one CLI, zero-dependency middleware, integrated RAG, and MCP management. This repository will receive no further updates.
+> See [Migration Guide](https://github.com/cloud99277/Z-Core/blob/main/docs/migration-from-kitclaw.md) for upgrade instructions.
+
 <div align="center">
 
 # 🐾 KitClaw
